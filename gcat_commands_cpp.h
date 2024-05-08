@@ -4,7 +4,8 @@ extern uint32_t b1r4[417];
 extern uint64_t b1startcat[417];
 
 extern int GetMinir4id9992(int band, int* er4);
-void GetR4PointersFrom_minir4(int i9992, uint64_t& rstartcat,
+extern int GetMinir4id9992(int band, uint64_t rank);
+extern void GetR4PointersFrom_minir4(int i9992, uint64_t& rstartcat,
 	uint32_t& istartr4, uint32_t& iendr4);
 
 extern int64_t row4t[10375];
@@ -305,8 +306,26 @@ struct T12 {
 	}
 
 };
+void Go_c17_20() {// process 17 file to get CFX mode
+	// search 17 using a file having known  as entry and one 17 given 6 6 5
+	char* ze = finput.ze;
+	uint64_t npuz = 0;
+	op.ton = sgo.vx[0];
+	cout << "Go_c17_20() band analysis build min get rank"
+		 << " op.ton=" << op.ton << endl;
+	while (finput.GetLigne()) {
+		if (strlen(ze) < 81)continue;
+		ze[81] = 0;
+		if (npuz++ < sgo.vx[0])continue;
+		//if (op.ton > 1)
+		cout << ze << endl;
+		genb12.GoSolForSearchRankFromNotMinSol(ze);
+
+		if (npuz >= sgo.vx[1])return;
+	}
+}
 /*
-void Go_c17_12() {// process 17 file to get CFX mode
+void Go_c17_20() {// process 17 file to get CFX mode
 	// search 17 using a file having known  as entry and one 17 given 6 6 5
 	char* ze = finput.ze;
 	uint64_t npuz = 0;
@@ -354,7 +373,7 @@ void Go_c17_12() {// process 17 file to get CFX mode
 		if (npuz >= sgo.vx[2])return;;
 	}
 }
-void Go_c17_13() {// process 17 file to get CFX mode for p1 file
+void Go_c17_20() {// process 17 file to get CFX mode for p1 file
 	// search 17 using a file having known  as entry and one 17 given 6 6 5
 	char* ze = finput.ze;
 	uint64_t npuz = 0;
@@ -380,6 +399,57 @@ void Go_c17_13() {// process 17 file to get CFX mode for p1 file
 	}
 }
 */
+void Go_c17_10() {// test every..
+	//for (int i = 0; i < 417; i++) cout << b1startcat[i] << " " << i << endl;
+	//return;
+	cout << "test every ???" << endl;
+	cout << sgo.vx64[0] << " -v0- first sol" << endl;
+	cout << sgo.vx64[1] << " -v1- every " << endl;
+	cout << sgo.vx[2] << " -v2- if 1 printout asked" << endl;
+	int it16_start = sgo.vx[0], it16_end = sgo.vx[1];
+	memset(&op, 0, sizeof op);
+	op.opcode = 10;
+	op.b2 = sgo.vx[5];
+	op.ton = sgo.vx[2];
+	op.out_entry = op.ton;
+	if (sgo.vx64[1] < 100000) {
+		cout << "increment - v1 - too low" << endl;
+		return;
+	}
+	uint64_t rank = sgo.vx64[0];
+	int n = 0;
+	while (rank < 5472730538) {
+		genb12.s_rank = rank;
+		if(!genb12.FindSolForRank())	genb12.GoSolForRank();
+
+		rank += sgo.vx64[1];
+		if(++n >10 )break;
+	}
+}
+void Go_c17_11() {// search one given rank
+	cout << "check one given rank" << endl;
+	cout << sgo.vx64[0] << " -v0- rank searched" << endl;
+	cout << sgo.vx[2] << " -v2- if 1 test find back" << endl;
+	memset(&op, 0, sizeof op);
+	op.opcode = 11;
+	op.b2 = sgo.vx[5];
+	op.ton = sgo.vx[2];
+	op.out_entry = op.ton;
+
+	genb12.s_rank = sgo.vx64[0];
+	if (!genb12.FindSolForRank())	genb12.GoSolForRank();
+	if (!sgo.vx[2]) return;
+	cout << " test find back rank" << endl;
+	if (genb12.FindRankForSolMin()) {
+		genb12.GoSolForRank();
+		char ze[82]; ze[81] = 0;
+		for (int i = 0; i < 81; i++)
+			ze[i] = genb12.s_grid0[C_transpose_rm[i]]+'1';
+		cout << ze << " after rotate" << endl;
+		genb12.GoSolForSearchRankFromNotMinSol(ze);
+	}
+
+}
 
 
 
@@ -393,6 +463,7 @@ void Go_c17_80() {// enumeration test
 	cout << sgo.vx[11] << " -vx- band 3 index if not 999" << endl;
 	int it16_start = sgo.vx[0], it16_end = sgo.vx[1];
 	memset(&op, 0, sizeof op);
+	op.opcode = 81;
 	op.ton = sgo.vx[2];
 	op.b2 = sgo.vx[5];
 	op.bx3 = sgo.vx[11];
@@ -411,17 +482,15 @@ void Go_c17_80() {// enumeration test
 
 void Go_c17_81() {// enumeration test using row4
 	//return; // revise command line
-	cout << "Go_c17_80 phase 2a enumeration test " << endl;
+	cout << "Go_c17_81 phase 2a enumeration test using r4" << endl;
 	cout << sgo.vx[0] << " -v0- first id 0_415" << endl;
 	cout << sgo.vx[1] << " -v1- second id 0_415" << endl;
 	cout << sgo.vx[2] << " -v2- if 1 printout asked" << endl;
-	cout << sgo.vx[5] << " -v5- band 2 index if not 9990" << endl;
-	cout << sgo.vx[11] << " -vx- band 3 index if not 999" << endl;
 	int it16_start = sgo.vx[0], it16_end = sgo.vx[1];
 	memset(&op, 0, sizeof op);
-	op.ton = sgo.vx[2];
+	op.opcode = 81;
 	op.b2 = sgo.vx[5];
-	op.bx3 = sgo.vx[11];
+	op.ton = sgo.vx[2];
 	op.out_entry = op.ton;
 	if (it16_start > 415 || it16_end > 415 || it16_start > it16_end) {
 		cerr << "invalid it16_start it16_end" << endl;
@@ -429,9 +498,15 @@ void Go_c17_81() {// enumeration test using row4
 	}
 	memset(p_cptg, 0, sizeof p_cptg);// used in debugging sequences only
 	memset(p_cpt2g, 0, sizeof p_cpt2g);// used in debugging sequences only
-	p_cpt2g[5] = b1startcat[it16_start];
 	for (int i416 = it16_start; i416 <= it16_end; i416++) {
-		genb12.NewBand1(i416);
+		int start = b1r4[i416], end = b1r4[i416 + 1];
+		if (start == end) continue;
+		genb12.InitBand1(i416);
+		p_cpt2g[5] = b1startcat[i416];
+		cout << i416 << " " << start << " "<<end << endl;
+		for (int ir4 = start; ir4 < end; ir4++) {
+			genb12.GoRow4From(ir4);
+		}
 	}
 }
 
@@ -481,6 +556,7 @@ void Go_c17_90() {// read index extract first
 	}
 	return;
 */
+	/*
 	int max = 0;
 	cout << "check minir4" << endl;
 	for (int i = 0; i < 9992; i++) {
@@ -496,7 +572,8 @@ void Go_c17_90() {// read index extract first
 	cout << " max count" << max << endl;
 
 
-	return;
+	return;	*/
+
 
 	char* ze = finput.ze;
 	int iw = 10, it = 0;

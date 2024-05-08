@@ -21,7 +21,6 @@ ofstream  fout1, fout2;
 
 #include "sk_gcath.h"   //main classes of the project
 GEN_BANDES_12 genb12;
-STD_B416 myband1, myband2;
 
 
 //tables of potential bands 1+2
@@ -29,9 +28,7 @@ STD_B416 myband1, myband2;
 uint64_t p_cptg[40], p_cpt1g[20], p_cpt2g[100];
 uint64_t p_cpt[40], p_cpt1[20];
 
-
-#include "gcat_commands_cpp.h"
-#include "go_17_bands_cpp.h"  
+#include "gcat_commands_cpp.h" 
 #include "gcat_genb12_cpp.h"     
 
 
@@ -45,8 +42,8 @@ void Go_0() {
 		strcpy(&zn[ll], "_file1.txt");
 		fout1.open(zn);
 	}
-	int need_input_file[7] = { 10,12,13,79,90,81,82 },need=0;
-	for(int i=0;i<7;i++)
+	int need_input_file[2] = { 20,90 },need=0;
+	for(int i=0;i<1;i++)
 		if (sgo.command == need_input_file[i]) { need = 1; break; }
 	if (need){// input file expected
 		if (!sgo.finput_name) {
@@ -60,9 +57,11 @@ void Go_0() {
 	}
 	cerr << "running command " << sgo.command << endl;
 	switch (sgo.command) {
-	//case 12: Go_c17_12(); break; // build min CF
-	//case 13: Go_c17_13(); break; // morph to min band1
+	case 10: Go_c17_10(); break; // test sample cat rank
+	case 11: Go_c17_11(); break; // give sol for one rank
+	case 20: Go_c17_20(); break; // rank on entry not min
 	case 80: Go_c17_80(); break; // enumeration
+	case 81: Go_c17_81(); break; // enumeration
 	case 90: Go_c17_90(); break; // enumeration
 
 	}

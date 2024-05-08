@@ -3057,9 +3057,18 @@ uint32_t minir4startr4[9993] = {
 int GetMinir4id9992(int band,int * er4){
 	if (band < 0 || band>415) return -1;
 	int start = b1minir4[band], end = b1minir4[band + 1];
-	register uint32_t v = 200 + 10 * er4[1] + er4[2];
+	register uint32_t v = 211 + 10 * er4[1] + er4[2];
+	cout << "band " << band << " er4 " << v << " st=" << start << " end=" << end << endl;
 	for(int i=start;i<end;i++)
 		if(v==tminir4[i] )return i;
+	return -1;
+}
+
+int GetMinir4id9992(int band, uint64_t rank) {
+	if (band < 0 || band>415) return -1;
+	int start = b1minir4[band], end = b1minir4[band + 1];
+	for (int i = start+1; i <= end; i++)
+		if (minir4startcat[i]>= rank)return i-1;
 	return -1;
 }
 

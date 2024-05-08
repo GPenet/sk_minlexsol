@@ -36,6 +36,24 @@ inline void MorphRow(BANDMINLEX::PERM& p, int* ra, int* rb) {
 	for (int i = 0; i < 9; i++)  rb[i] = p.map[ra[p.cols[i]]];
 }
 
+void  GEN_BANDES_12::InitRow4FromI10375(int i10375) {
+	grid0[27] = 1;
+	register int64_t r4 = row4t[i10375] - 200000000,
+		w = r4 / 10000000;
+	grid0[28] = (int)w - 1; r4 -= w * 10000000;
+	w = r4 / 1000000; grid0[29] = (int)w - 1; r4 -= w * 1000000;
+	w = r4 / 100000; grid0[30] = (int)w - 1; r4 -= w * 100000;
+	w = r4 / 10000; grid0[31] = (int)w - 1; r4 -= w * 10000;
+	w = r4 / 1000; grid0[32] = (int)w - 1; r4 -= w * 1000;
+	w = r4 / 100; grid0[33] = (int)w - 1; r4 -= w * 100;
+	w = r4 / 10; grid0[34] = (int)w - 1; r4 -= w * 10;
+	grid0[35] = (int)r4 - 1;
+	for (int i = 27; i < 36; i++) 	gbit[i] = 1 << grid0[i];
+	b4dmr[0] = gbit[27] | gbit[28] | gbit[29];
+	b5dmr[0] = gbit[30] | gbit[31] | gbit[32];
+	p_cpt2g[4]++;		p_cpt[4] = 0;
+}
+
 void GEN_BANDES_12::GoRow4() {
 	grid0[27] = 1; gbit[27] = 2;// digit2 in r4c1
 	gfree[28] = 0x1ff ^ (2 | colband1[1]);
@@ -90,10 +108,45 @@ r4c9:gfree[35] = 0x1ff ^ (b4b5dmr[0] | gbit[33] | gbit[34] | colband1[8]);
 
 		}
 	}
+	//return;
 	goto r4c8l;
 }
-void GEN_BANDES_12::GoRow5() {
 
+void GEN_BANDES_12::GoRow4From(int itr4) {
+	int ir4 = tr4u[itr4];
+	InitRow4FromI10375(ir4);
+	/*
+	{ // build the row 4 out of the tables
+		grid0[27] = 1;
+		register int64_t r4 = row4t[ir4] - 200000000,
+			w = r4 / 10000000;
+		grid0[28] = (int)w - 1; r4 -= w * 10000000;
+		w = r4 / 1000000; grid0[29] = (int)w - 1; r4 -= w * 1000000;
+		w = r4 / 100000; grid0[30] = (int)w - 1; r4 -= w * 100000;
+		w = r4 / 10000; grid0[31] = (int)w - 1; r4 -= w * 10000;
+		w = r4 / 1000; grid0[32] = (int)w - 1; r4 -= w * 1000;
+		w = r4 / 100; grid0[33] = (int)w - 1; r4 -= w * 100;
+		w = r4 / 10; grid0[34] = (int)w - 1; r4 -= w * 10;
+		grid0[35] = (int)r4 - 1;
+		for (int i = 27; i < 36; i++) {
+			gbit[i] = 1 << grid0[i];
+		}
+	}
+	b4dmr[0] = gbit[27] | gbit[28] | gbit[29];
+	b5dmr[0] = gbit[30] | gbit[31] | gbit[32];
+	p_cpt2g[4]++;		p_cpt[4] = 0;
+	*/
+	GoRow5();
+	fout1 << it16 << ";";
+	for (int i = 27; i < 36; i++) fout1 << grid0[i] + 1;
+	fout1 << ";" << p_cpt2g[5] << " " << p_cpt[4] << endl;
+	p_cpt2g[5] += p_cpt[4];
+
+}
+
+
+void GEN_BANDES_12::GoRow5() {
+	go_back = 0;
 	b6dmr[0] = gbit[33] | gbit[34] | gbit[35];
 	gfree[36] = 0xff & ~ (b4dmr[0] | colband1[0]);// can not be 9
 r5c1l: {CELLGO(36, r5c2, endr5)}
@@ -134,14 +187,11 @@ r5c9:gfree[44] = 0x1ff ^ (b4b5dmr[1] | gbit[42] | gbit[43] | colband1[8]);
 		//cout << " r4r5 " << endl;
 		GoRow6();
 	}
+	if (go_back)return;
 	goto r5c8l;
 }
 void GEN_BANDES_12::GoRow6() {
 	// check first if rows 4 5 stay minimal with auto morphs band1
-	if (0 && p_cpt2g[4] == 121) {
-		for (int i = 27; i < 45; i++)cout << grid0[i] + 1;
-		cout << "new 5	"  << endl;
-	}
 	if (n_auto_b1) {
 		n_auto_b1r4r5 = 0;
 		for (int imorph = 0; imorph < n_auto_b1; imorph++) {
@@ -208,9 +258,11 @@ r6c9:gfree[53] = r6mfree[2] & ~(colband1[8] | gbit[51] | gbit[52]);;
 		gbit[53] = gfree[53];
 		GoNewBand2();
 	}
+	if (go_back)return;
 	goto r5c8l;
 }
 void GEN_BANDES_12::GoNewBand2() {
+	if (go_back)return;
 	// build now the gangster band 3
 	for (int i = 0, j = 27; i < 9; i++, j++)
 		b3colfree[i] = 0x1ff ^ (colband1[i] | gbit[j] | gbit[j + 9] | gbit[j + 18]);
@@ -223,10 +275,10 @@ void GEN_BANDES_12::GoNewBand2() {
 	it16_2 = pband2.i416;
 	if (it16_2 < it16) return;// lower band1 
 	if (op.b2 < 416 && it16_2 != op.b2) return;
-	if (0 &&p_cpt2g[4] == 115) {
+	if (0 &&op.opcode == 11) {
 		for (int i = 27; i < 54; i++)cout << grid0[i] + 1;
-		cout << "new band2 " << it16 << " " << it16_2 << endl;
-
+		cout << "new band2 " << it16 << " " << it16_2
+			<<" cpt4="<< p_cpt[4] << " p_cpt2g[5]=" << p_cpt2g[5] << endl;
 	}
 	n_auto_b1b2 = n_auto_b2b1 = 0;
 	if (n_auto_b1) {
@@ -277,7 +329,7 @@ int GEN_BANDES_12::TWW::BelowCompB1b2() {
 
 void GEN_BANDES_12::GoBand3() {
 	p_cpt2g[6]++;
-	if (0 &&p_cpt2g[4]>120) {
+	if (0 &&op.opcode == 11) {
 		char ws[82];
 		memset(ws, '.', 81); ws[81] = 0;
 		for (int i = 0; i < 55; i++)ws[i] = grid0[i] + '1';
@@ -328,6 +380,7 @@ r7c7:	r7dmr[1] = gbit[57] | gbit[58] | gbit[59];
 	bitscanforward(grid0[61], gbit[61]);
 	bitscanforward(grid0[62], gbit[62]);
 	Gor8c2();
+	if (go_back)return;
 	goto r7c6l;
 }
 
@@ -496,6 +549,7 @@ inline void GEN_BANDES_12::Gor8c7() {
 }
 
 inline void GEN_BANDES_12::GoCheckSol() {
+	if (go_back)return;
 	if (n_auto_b1) {
 		for (int imorph = 0; imorph < n_auto_b1; imorph++) {
 			BANDMINLEX::PERM& p = t_auto_b1[imorph];
@@ -634,22 +688,33 @@ int GEN_BANDES_12::TWW::BelowComp() {
 	if (ir < 0) return 1; 
 	return 0;
 }
-
-int GEN_BANDES_12::TWW1::QuickCheckDiagMinlex() {
-	GEN_BANDES_12& o = genb12;
-	for (int i = 0; i < 81; i++)zs0[i] = o.grid0[C_transpose_d[i]];
-	memcpy(ibx, o.idt16, sizeof ib);
-	RigthOrder();
-	if (ibx[0] < o.it16) return 1;	if (ibx[0] > o.it16) return 0;
-	// same band 1 push to minimum
-	if (ibx[1] < o.it16_2) return 1;	if (ibx[1] > o.it16_2) return 0;
-	if (ibx[2] < o.it16_3) return 1;	if (ibx[2] > o.it16_3) return 0;
-	// same both ways 
-	MorphToB1First();
-	return 2;
-}
 void GEN_BANDES_12::Outcat() {
+	if (go_back)return;
 	p_cpt[4]++;
+	switch(op.opcode)
+	{
+	case 10: 
+	case 11: {
+		register uint64_t R = s_r4start + p_cpt[4];
+		if (!op.searchrank) {
+			if (R < s_rank) return;
+			if (R > s_rank) { go_back = 1; return; }
+			memcpy(s_grid0, grid0, sizeof grid0);
+			for (int i = 0; i < 81; i++)cout << grid0[i] + 1;
+			cout << " sol for rank " << s_rank << endl;
+			go_back = 1; return;
+		}
+		else {// search rank for a given min grid
+			for (int i = 36; i < 81; i++) {
+				cout << grid0[i] + 1;
+
+			}
+			return;
+		}
+	}
+
+	}
+	return;
 	if (0 && p_cpt2g[4] ==69) {
 		for (int i = 0; i < 81; i++)fout1 << grid0[i] + 1;
 		fout1 << "  " << it16_2 << " " << it16_3<<"\t"<< p_cpt2g[4]<<" "<< p_cpt[4]		<< endl;
@@ -662,17 +727,166 @@ void GEN_BANDES_12::Outcat() {
 	
 }
 
-int GEN_BANDES_12::TWW1::CheckDiagMore_abc() {
-	GEN_BANDES_12& o = genb12;
-	// same both ways 3 different Bx
-	if (!o.n_auto_b1) return 2;
-	for (int i = 0; i < o.n_auto_b1; i++) {
-		perm_ret = o.t_auto_b1[i];
-		MorphToB1();
-		if (Compare(o.grid0) > 0)return 0; // diag smaller
+//==========================
+int GEN_BANDES_12::GetBandIndex() {
+	for (int i = 1; i <= 416; i++)		if (b1startcat[i] >= s_rank) {
+		s_band = i - 1;
+		return 0; 
 	}
-	return 2;
+	return -1;
 }
 
-//void BandReShape(int* s, int* d, BANDMINLEX::PERM p);
-//void BandReOrder(int* d);
+
+int GEN_BANDES_12::FindSolForRank() {
+	if (s_rank > 5472730538) return -1;
+	if (GetBandIndex() < 0) return -1;
+	if (op.opcode == 11) cout << "band id 0-415=" << s_band<<endl;
+	s_minir4 = GetMinir4id9992(s_band, s_rank);
+	if (op.opcode == 11) cout << "s_minir4=" << s_minir4 << endl;
+	if (s_minir4 < 0) return -1;
+	uint32_t istartr4, iendr4;
+	GetR4PointersFrom_minir4(s_minir4, s_rank_r4, istartr4, iendr4);
+	if (op.opcode == 11) cout << "s_rank_r4=" << s_rank_r4
+		<< " istartr4=" << istartr4 << " iendr 4="<< iendr4 << endl;
+
+
+	uint64_t rk = s_rank_r4;
+	for (uint32_t i = istartr4; i < iendr4; i++) {
+		rk+= tr4nsol[i];
+		//if (op.opcode == 11)cout << i << " " << rk << endl;
+		if (rk >= s_rank) {
+			s_r4_index = i;
+			s_r4start=rk- tr4nsol[i];
+			return 0;
+		}
+	}
+	return -1;
+};
+void GEN_BANDES_12::GoSolForRank() {
+	cout << s_rank << " status GoSolForRank band " << s_band		
+	<< " ir4=" << s_r4_index << " rk=" << s_r4start  << endl;
+	genb12.InitBand1(s_band);
+	p_cpt2g[5] = s_r4start;
+	InitRow4FromI10375(tr4u[s_r4_index]);
+	for (int i = 0; i < 36; i++) cout << grid0[i] + 1;
+	cout << endl;
+	op.searchrank = 0;
+	GoRow5();
+}
+int GEN_BANDES_12::FindRankForSolMin() {
+	BANDMINLEX::PERM perm_ret;
+	if (bandminlex.Getmin(s_grid0, &perm_ret)<0) return -1;
+	s_band= perm_ret.i416;
+	if (op.opcode == 11) cout << "band get id 0-415=" << s_band << endl;
+	s_minir4= GetMinir4id9992(s_band, &s_grid0[27]);
+	if (op.opcode == 11) cout << "get s_minir4=" << s_minir4 << endl;
+	if (s_minir4 < 0)return -1;
+	BuildVr4();
+	s_r4_index= GetRow4tIndex(s_vr4);
+	if (op.opcode == 11) cout << s_vr4 << "get r4 index=" << s_r4_index << endl;
+
+	if (s_r4_index < 0)return -1;
+	uint32_t istartr4, iendr4;
+	GetR4PointersFrom_minir4(s_minir4, s_rank_r4, istartr4, iendr4);
+	if (op.opcode == 11) cout << "s_rank_r4=" << s_rank_r4
+		<< " istartr4=" << istartr4 << " iendr 4=" << iendr4 << endl;
+	return -1;
+	uint64_t rk = s_rank_r4;
+	for (uint32_t i = istartr4; i < iendr4; i++) {
+		rk += tr4nsol[i];
+		//if (op.opcode == 11)cout << i << " " << rk << endl;
+		if (tr4u[i] == s_r4_index) {
+			s_rank = 0;// it is a searched rank
+			s_r4start = rk - tr4nsol[i];
+			return 0;
+		}
+	}
+	return -1;
+
+
+	return -1;
+
+}
+void GEN_BANDES_12::GoSolForSearchRank() {
+	cout << s_rank << " status GoSolForSearch Rank band " << s_band
+		<< " ir4=" << s_r4_index << " rk=" << s_r4start << endl;
+	p_cpt2g[5] = s_r4start;
+	for (int i = 0; i < 36; i++) cout << grid0[i] + 1;
+	cout << endl;
+	op.searchrank = 1;
+	GoRow5();
+}
+//========================== entry not granted min lex
+void GEN_BANDES_12::CompUpdateZmin() {
+	int ir = BandCompare(zsa, &zsmin[27]);
+	if (ir > 0) return;
+	if (!ir) {// band2 = see band3
+		ir = BandCompare(zsb, &zsmin[54]);
+		if (ir >= 0)return;
+	}
+	// new min
+	memcpy(&zsmin[27], zsa, sizeof zsa);
+	memcpy(&zsmin[54], zsb, sizeof zsb);
+
+}
+void GEN_BANDES_12::ZminSeeMorphs(int* o) {
+	for (int imorph = 0; imorph < n_auto_b1; imorph++) {
+		BANDMINLEX::PERM& p = t_auto_b1[imorph];
+		BandReShape(&o[27], zsa, p);
+		BandReShape(&o[54], zsb, p);
+		if (zsa[0] != 1) {
+			int temp[27];
+			memcpy(temp, zsa, sizeof temp);
+			memcpy(zsa, zsb, sizeof temp);
+			memcpy(zsb, temp, sizeof temp);
+		}
+		CompUpdateZmin();
+	}
+}
+int GEN_BANDES_12::ZminCompare54(int* o) {	 
+	for (int i = 27; i < 81; i++) {
+		if (o[i] > zsmin[i]) return 1;
+		if (o[i] < zsmin[i]) return -1;
+	}
+	return 0;
+}
+void GEN_BANDES_12::SeeNewMorph(int* o) {
+	if (ZminCompare54(o)) memcpy(zsmin, o, sizeof zsmin);
+	ZminSeeMorphs(o);
+}
+void GEN_BANDES_12::GoSolForSearchRankFromNotMinSol(char* ze) {
+	for (int i = 0; i < 81; i++)	grid0[i]=ze[i]- '1';
+	tww.Init(grid0);
+	tww2.InitD(grid0);
+	tww.DumpP1(" tww ");
+	tww2.DumpP1(" tww2 ");
+	if (tww2.ib[0] < tww.ib[0]) {// exchange tww tww2
+		tww3 = tww; tww = tww2; tww2 = tww3;	}
+	memcpy(grid0, tww.zs0, sizeof grid0);
+	it16 = tww.ib[0];	
+	n_auto_b1 = tblnauto[it16]; //ia 0-415 not index
+	t_auto_b1 = &automorphsp[tblnautostart[it16]];
+	for (int i = 0; i < 81; i++) cout << grid0[i] + 1;
+	cout << " first it16=" << it16 << " nauto=" << n_auto_b1 << endl;
+	// Get min on tww
+	memcpy(zsmin, grid0, sizeof zsmin);
+	ZminSeeMorphs(grid0);
+	GridDump(zsmin, "min from automorphs");
+	if (tww.ib[1] == it16) {
+		tww.InitAndMorph(1); SeeNewMorph(tww.zs1);
+		if (tww.ib[2] == it16) {
+			tww.InitAndMorph(2); SeeNewMorph(tww.zs1);
+		}
+	}
+	if (tww2.ib[0] == it16) {
+		tww2.InitAndMorph(0); SeeNewMorph(tww.zs1);
+		if (tww2.ib[1] == it16) {
+			tww2.InitAndMorph(1); SeeNewMorph(tww.zs1);
+			if (tww2.ib[2] == it16) {
+				tww2.InitAndMorph(2); SeeNewMorph(tww.zs1);
+			}
+		}
+	}
+	GridDump(zsmin, "min final");
+
+}
