@@ -127,18 +127,18 @@ int BandCompare(int* a, int* b) {
 	return 0;
 
 }
-void BandDump(int* a, char * lib) {
+void BandDump(int* a, const char * lib) {
 	for (int i = 0; i < 27; i++) cout << a[i] + 1;
 	cout << " " << lib << endl;
 }
-void GridDump(int* a, char* lib) {
+void GridDump(int* a,const  char* lib) {
 	for (int i = 0; i < 81; i++) cout << a[i] + 1;
 	cout << " " << lib << endl;
 }
 void Table54Dump(uint64_t* tin, uint32_t ntin) {
 	for (uint32_t i = 0; i < ntin; i++)
 		cout << Char54out(tin[i]) << " " << i 
-		<<" "<<__popcnt64(tin[i]) << endl;
+		<<" "<<_popcnt64(tin[i]) << endl;
 }
 
 
@@ -306,99 +306,6 @@ struct T12 {
 	}
 
 };
-void Go_c17_20() {// process 17 file to get CFX mode
-	// search 17 using a file having known  as entry and one 17 given 6 6 5
-	char* ze = finput.ze;
-	uint64_t npuz = 0;
-	op.ton = sgo.vx[0];
-	cout << "Go_c17_20() band analysis build min get rank"
-		 << " op.ton=" << op.ton << endl;
-	while (finput.GetLigne()) {
-		if (strlen(ze) < 81)continue;
-		ze[81] = 0;
-		if (npuz++ < sgo.vx[0])continue;
-		//if (op.ton > 1)
-		cout << ze << endl;
-		genb12.GoSolForSearchRankFromNotMinSol(ze);
-
-		if (npuz >= sgo.vx[1])return;
-	}
-}
-/*
-void Go_c17_20() {// process 17 file to get CFX mode
-	// search 17 using a file having known  as entry and one 17 given 6 6 5
-	char* ze = finput.ze;
-	uint64_t npuz = 0;
-	op.ton = sgo.vx[0];
-	op.known = sgo.vx[5]; // no known if 1
-	cout << "Go_c17_12() band analysis build min bx mode vx[5]"
-		<<op.known  <<" op.ton="<< op.ton << endl;
-	while (finput.GetLigne()) {
-		if (op.known) {// must add it for this process
-			if (strlen(ze) < 81)continue;
-			memcpy(&ze[82], ze, 81);// all is known
-			ze[163] = 0;
-		}
-		if (strlen(ze) < 163)continue;
-		if (npuz++ <sgo.vx[1])continue;
-		if(op.ton>1)cout << ze << endl;
-		T12 zt12;
-		zt12.Init(ze); zt12.SetMode();
-		if (zt12.mode) {
-			if (op.ton)cout << " use diag " << endl;
-			zt12.zw = zt12.zwd;
-		}
-		if ( op.ton)zt12.zw.Print("start zw");
-		zt12.zw.ReshapeZe();
-
-		if (op.ton)zt12.zw.Print("ze reshaped");
-
-		zt12.zw.GetCFX();
-		int nclb[3] = { 0,0,0 };
-		for (int ib = 0,i=0; ib < 3; ib++) {
-			for (int j = 0; j < 27; j++, i++) {
-				if (zt12.zw.zks[i] != '.')nclb[ib]++;
-			}
-		}
-		zt12.zw.zs[81] = 0;
-		fout1 << &zt12.zw.zs[82]<<";"
-			<< zt12.zw.zs << ";"
-			<< zt12.zw.ib1a << ";"	<< zt12.zw.ib2a << ";"	<< zt12.zw.ib3a
-			<< ";"	<< nclb[0] << ";" << nclb[1] << ";" << nclb[2] << endl;
-
-		if (op.ton > 1) {
-			if (zt12.zw.na || (zt12.zw.ib1a == zt12.zw.ib2a) || (zt12.zw.ib2a == zt12.zw.ib3a))
-				zt12.zw.Print2(" end ze");
-		}
-		if (npuz >= sgo.vx[2])return;;
-	}
-}
-void Go_c17_20() {// process 17 file to get CFX mode for p1 file
-	// search 17 using a file having known  as entry and one 17 given 6 6 5
-	char* ze = finput.ze;
-	uint64_t npuz = 0;
-	cout << "Go_c17_13() band analysis get expected NEDx file"   << endl;
-	op.known = sgo.vx[5]; // no known if 1
-	while (finput.GetLigne()) {
-		if (op.known) {// must add it for this process
-			if (strlen(ze) < 81)continue;
-			memcpy(&ze[82], ze, 81);// all is known
-			ze[163] = 0;
-		}
-		if (strlen(ze) < 163)continue;
-		if (npuz++ < sgo.vx[1])continue;
-		if (op.ton) cout << ze << endl;
-		T12 zt12;
-		zt12.Init13(ze);
-		if (op.ton)zt12.zw.Print("start zw");
-		zt12.zw.ReshapeZe();
-		if (op.ton)zt12.zw.Print("ze reshaped");
-		zt12.zw.GetCFX13();
-		//if (zt12.zw.ib3a == zt12.zw.ib2a)zt12.zw.PrintCFX("start zw cfx");
-		if (npuz >= sgo.vx[2])return;;
-	}
-}
-*/
 void Go_c17_10() {// test every..
 	//for (int i = 0; i < 417; i++) cout << b1startcat[i] << " " << i << endl;
 	//return;
@@ -450,9 +357,90 @@ void Go_c17_11() {// search one given rank
 	}
 
 }
+void Go_c17_20() {// process 17 file to get CFX mode
+	// search 17 using a file having known  as entry and one 17 given 6 6 5
+	char* ze = finput.ze;
+	uint64_t npuz = 0;
+	op.ton = sgo.vx[0];
+	cout << "Go_c17_20() band analysis build min get rank"
+		<< " op.ton=" << op.ton << endl;
+	while (finput.GetLigne()) {
+		if (strlen(ze) < 81)continue;
+		ze[81] = 0;
+		if (npuz++ < sgo.vx[0])continue;
+		//if (op.ton > 1)
+		cout << ze << endl;
+		genb12.GoSolForSearchRankFromNotMinSol(ze);
 
+		if (npuz >= sgo.vx[1])return;
+	}
+}
 
+void Go_c17_30() {// print the table or rows4
+	cout << "print part of the row 4 table" << endl;
+	cout << sgo.vx[0] << " -v0- first band 0-415" << endl;
+	cout << sgo.vx[1] << " -v1- last band 0-415 " << endl;
+	if (sgo.vx[1] < sgo.vx[0] || sgo.vx[1] >415) {
+		cout << "illegal chunk of band 1" << endl;
+		return;
+	}
+	for (uint32_t i = sgo.vx[0]; i <= sgo.vx[1]; i++) {
+		genb12.InitBand1(i);
+		uint32_t ir4a = b1r4[i], ir4b = b1r4[i + 1];
+		uint64_t rank = b1startcat[i];
+		for (uint32_t j = ir4a; j < ir4b; j++) {
+			uint32_t jr4index = tr4u[j], jr4nsol=tr4nsol[j];
+			genb12.InitRow4FromI10375(jr4index);
+			for (int k = 0; k < 36;k++) fout1 << genb12.grid0[k] + 1;
+			fout1 << ";" << i << ";" << j << ";" << rank <<";"<< jr4nsol << endl;
+			rank += jr4nsol;
+		}
+	}
 
+}
+void Go_c17_31() {// print part of the cat for given rows 4
+	cout << "print part of the row 4 table" << endl;
+	cout << sgo.vx[0] << " -v0- first row4" << endl;
+	cout << sgo.vx[1] << " -v1- last row4 " << endl;
+	//if (!sgo.vx[0])sgo.vx[0] = 1;
+	if (sgo.vx[1] < sgo.vx[0] || sgo.vx[1] >652408) {
+		cout << "illegal chunk of rows4" << endl;
+		return;
+	}
+	memset(&op, 0, sizeof op);
+	op.opcode = 31;
+	op.b2 = sgo.vx[5];
+	op.ton = sgo.vx[2];
+	op.out_entry = op.ton;
+	memset(p_cptg, 0, sizeof p_cptg);// used in debugging sequences only
+	memset(p_cpt2g, 0, sizeof p_cpt2g);
+	// Find the start using the band 
+	for (uint32_t i = 0; i <= 415; i++) {
+		genb12.InitBand1(i);
+		uint32_t ir4a = b1r4[i], ir4b = b1r4[i + 1]-1;
+		if (ir4a > sgo.vx[1])return;
+		if (ir4b > sgo.vx[1])ir4b = sgo.vx[1] ;
+		uint64_t rank = b1startcat[i];
+		cout << "start band " << i << " start count " << p_cpt2g[50] << endl;
+		p_cpt[14] = 0;
+		for (uint32_t j = ir4a; j <= ir4b; j++) {
+			uint32_t jr4index = tr4u[j], jr4nsol = tr4nsol[j];
+			if (j < sgo.vx[0]) { rank += jr4nsol; continue; }
+			genb12.InitRow4FromI10375(jr4index);
+			genb12.s_rank = rank;
+			if (1) {
+				for (int k = 0; k < 36; k++) cout << genb12.grid0[k] + 1;
+				cout << ";" << i << ";" << j << ";" << rank << ";" << jr4nsol << endl;
+			}
+			genb12.GoRow5();
+			rank += jr4nsol;
+		}
+		cout << "seen for band " << i << " " << p_cpt[14] << endl;
+		p_cpt2g[50] += p_cpt[14];
+		if (ir4b == sgo.vx[1])break;
+	}
+	cout << "end count "<< p_cpt2g[50] << endl;
+}
 void Go_c17_80() {// enumeration test
 	//return; // revise command line
 	cout << "Go_c17_80 enumeration test  " << endl;
@@ -597,9 +585,12 @@ void Go_c17_90() {// read index extract first
 		//	cout << sgo.items[i]<<" ";
 		//cout << endl;
 		band = atoi(sgo.items[0]);
-		r4=_atoi64(sgo.items[1]);
-		start= _atoi64(sgo.items[2]);
-		nsol = _atoi64(sgo.items[3]);
+		//r4=_atoi64(sgo.items[1]);
+		r4 = strtoll( sgo.items[1],0,10);
+		//start= _atoi64(sgo.items[2]);
+		start = strtoll(sgo.items[2],0,10);
+		//nsol = _atoi64(sgo.items[3]);
+		nsol = strtoll(sgo.items[3],0,10);
 		sgo.items[1][3] = 0;
 		minir4 = atoi(sgo.items[1]);
 /*

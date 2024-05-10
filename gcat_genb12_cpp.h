@@ -712,7 +712,14 @@ void GEN_BANDES_12::Outcat() {
 			return;
 		}
 	}
-
+	case 31: {
+		p_cpt[14]++;
+		if (op.ton) {
+			for (int i = 0; i < 81; i++)fout1 << grid0[i] + 1;
+			fout1 << ";" << s_rank + p_cpt[4] << endl;
+		}
+		return;
+	}
 	}
 	return;
 	if (0 && p_cpt2g[4] ==69) {

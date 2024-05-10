@@ -78,6 +78,9 @@ int main(int narg, char *argv[]) {
 			else {
 				int ind = ww[2] - '0';
 				if (ind < 0 || ind > 9) continue;
+				//sgo.vx64[ind] = _atoi64(&ww[4]);
+				sgo.vx64[ind]= strtoll( &ww[4],0,10);
+
 				vx[ind] = atoi(&ww[4]);
 			}
 			continue;

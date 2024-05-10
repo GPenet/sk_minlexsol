@@ -60,6 +60,8 @@ void Go_0() {
 	case 10: Go_c17_10(); break; // test sample cat rank
 	case 11: Go_c17_11(); break; // give sol for one rank
 	case 20: Go_c17_20(); break; // rank on entry not min
+	case 30: Go_c17_30(); break; // print part of the row4 table
+	case 31: Go_c17_31(); break; // print part of the catalog
 	case 80: Go_c17_80(); break; // enumeration
 	case 81: Go_c17_81(); break; // enumeration
 	case 90: Go_c17_90(); break; // enumeration

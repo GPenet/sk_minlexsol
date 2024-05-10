@@ -183,7 +183,7 @@ struct GEN_BANDES_12 {// encapsulating global data
 		}
 
 
-		void DumpP1(char* const lib) {
+		void DumpP1(const char*  lib) {
 			cout << "ib " << ib[0] << " " << ib[1] << " " << ib[2] << endl;
 			for (int i = 0; i < 81; i++) cout << zs0[i] + 1;
 			cout << lib  << endl;
