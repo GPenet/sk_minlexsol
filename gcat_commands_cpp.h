@@ -662,3 +662,780 @@ void Go_c17_90() {// read index extract first
 	//cout << " maxnsol" << maxnsol << endl;
 	//fout1 << startitems  << endl;
 }
+
+const char* t444g[44] = {
+"123456789123456789123456789","123456789123456789123457689",
+"123456789123456789124357689","123456789123456789124378569",
+"123456789123456789147258369","123456789123457689123458679",
+"123456789123457689123468579","123456789123457689124356789",
+"123456789123457689124358679","123456789123457689124367589",
+"123456789123457689124368579","123456789123457689124389567",
+"123456789123457689126345789","123456789123457689126347589",
+"123456789123457689126348579","123456789123457689145267389",
+"123456789123457689145268379","123456789123457689146258379",
+"123456789123457689148259367","123456789124357689125348679",
+"123456789124357689125367489","123456789124357689125368479",
+"123456789124357689125378469","123456789124357689126358479",
+"123456789124357689126378459","123456789124357689126389457",
+"123456789124357689128345679","123456789124357689128356479",
+"123456789124357689128359467","123456789124357689134258679",
+"123456789124357689134268579","123456789124357689135268479",
+"123456789124357689135278469","123456789124357689136258479",
+"123456789124357689136278459","123456789124357689137268459",
+"123456789124357689138259467","123456789124357689138269457",
+"123456789124357689158267349","123456789124378569129356478",
+"123456789124378569135279468","123456789124378569137245689",
+"123456789124378569157268349","123456789147258369159267348",
+};
+
+int tpermgand[6][3] = { {0,1,2},{0,2,1},
+	{1,0,2},{1,2,0},{2,0,1},{2,1,0} };
+void Getpats18(int row, int* cols, int* pats) {
+	int rowsx = 7 ^ (1 << row), row1, row2;
+	bitscanforward(row1, rowsx); bitscanreverse(row2, rowsx);
+	int c1 = 9 * row1 + cols[1], c2 = 9 * row2 + cols[2],
+		c3 = 9 * row1 + cols[2], c4 = 9 * row2 + cols[1];
+	pats[0] = 1 << c1 | 1 << c2;
+	pats[1] = 1 << c3 | 1 << c4;
+}
+// minlex starts and gangsters minlex processing t416
+struct GANGMINLEX {// receive a band send back i416 and morphing data
+	int gb3[9], gb3d[9][3], gdcols[9][3],g0[27]; 
+	int tcols[9], tcols_cols[9], tcols_count[9], tcols_stk[9], ntcols ;
+	int tcolss[9];
+	int cellmap[27], digitmap[9],igang,colmap[9],stackmap[3];
+	void MappingInit() {
+		for (int i = 0; i < 27; i++) cellmap[i] = i;
+		for (int i = 0; i < 9; i++) digitmap[i] = i;
+	}
+	void SortTcols() {
+		int n = 0;
+		for (int i = 0; i < ntcols; i++)
+			if (tcols_count[i] == 3)tcolss[n++] = i;
+		for (int i = 0; i < ntcols ; i++)
+			if (tcols_count[i] == 2)tcolss[n++] = i;
+		for (int i = 0; i < ntcols ; i++)
+			if (tcols_count[i] == 1)tcolss[n++] = i;
+
+	}
+	//int box_morphed[3][9], box_mapped[3][9], map[9];
+	//int minirows[9], * bbx, * ccx, * rrx, ccx2[3], ccx3[3];
+	void Init(int* o) {
+		memcpy(g0, o, sizeof g0);
+		memset(gb3, 0, sizeof gb3);
+		ntcols = 0;
+		for (int istk = 0, k = 0, icol = 0; istk < 3; istk++)
+			for (int i = 0; i < 3; i++, icol++) {
+				for (int j = 0; j < 3; j++, k++) {
+					register int c = g0[k];
+					gb3[icol] |= 1 << c;
+					gb3d[icol][j] = c;
+					gdcols[c][istk] = icol;
+				}
+				register int v = gb3[icol];
+				for (int j = 0; j < ntcols; j++) {
+					if (v == tcols[j]) {
+						tcols_count[j]++;
+						tcols_cols[j] |= 1 << icol;
+						tcols_stk[j] |= 1 << istk;
+						v = 0; break;
+					}
+				}
+				if (v) {
+					tcols_count[ntcols]=1; 
+					tcols_cols[ntcols] = 1 << icol;
+					tcols_stk[ntcols] = 1 << istk;
+					tcols[ntcols++] = v; }
+			}
+		switch (ntcols) {
+		case 3: Go3(); return;
+		case 5: Go5(); return;
+		case 6: Go6(); return;
+		case 7: Go7(); return;
+		case 8: Go8(); return;
+		case 9: Go9(); return;
+		}
+	}
+	void InitDump() {
+		for (int i = 0; i < 27; i++) cout << g0[i] + 1;
+		cout << " gangster  studied ntcols = " << ntcols << endl;
+		for (int i = 0; i < ntcols; i++) {
+			cout << Char9out(tcols[i]) << " count " << tcols_count[i];
+			cout << " cols " << Char9out(tcols_cols[i]) 
+				<< "  stk=" << tcols_stk[i] << endl;
+		}
+
+	}
+	void DumpSort() {
+		for (int i = 0; i < 27; i++) cout << g0[i] + 1;
+		cout << " gangster  studied ntcols = " << ntcols << endl;
+		for (int ix = 0; ix < ntcols; ix++) {
+			int i= tcolss[ix];
+			cout << Char9out(tcols[i]) << " count " << tcols_count[i];
+			cout << " cols " << Char9out(tcols_cols[i])
+				<< "  stk=" << tcols_stk[i]
+				<< " isort="<<i << endl;
+		}
+
+	}	
+	void Initt(const char* o) {// for test scrambled entry
+		int d[27];
+		for (int ic = 0,i=0; ic < 9; ic++) {
+			const char* oic = &o[3 * (8 - ic)];
+			for (int j = 0; j < 3; j++, i++)
+				d[i] = oic[j]-'1';
+		}
+		Init(d);
+	}
+	inline void Map3( int v) {
+		bitscanforward(digitmap[0], v);
+		v ^= 1 << digitmap[0];
+		bitscanforward(digitmap[1], v);
+		bitscanreverse(digitmap[2], v);
+	}
+	inline void Map_2_1(int d0, int v1, int v2) {
+		int d1, d2,d3;
+		bitscanforward(d1, v1);
+		bitscanreverse(d2, v1);
+		bitscanforward(d3, v2);
+		digitmap[d0++] = d1;
+		digitmap[d0++] = d2;
+		digitmap[d0] = d3;
+	}
+	inline void Map_1_2(int d0, int v1, int v2) {
+		int d1, d2, d3;
+		bitscanforward(d1, v1);
+		bitscanforward(d2, v2);
+		bitscanreverse(d3, v2);
+		digitmap[d0++] = d1;
+		digitmap[d0++] = d2;
+		digitmap[d0] = d3;
+	}
+	inline void Map_1_1_1(int d0,int v1,int v2,int v3) {
+		int d1, d2, d3;
+		bitscanforward(d1, v1);
+		bitscanforward(d2, v2);
+		bitscanforward(d3, v3);
+		digitmap[d0++] = d1;
+		digitmap[d0++] = d2;
+		digitmap[d0] = d3;
+	}
+	inline void MapC3(int c0, int v) {
+		bitscanforward(colmap[c0], v);
+		v ^= 1 << colmap[c0];
+		bitscanforward(colmap[c0+3], v);
+		bitscanreverse(colmap[c0 + 6], v);
+	}
+	inline void MapC2(int c0, int v) {
+		bitscanforward(colmap[c0], v);
+		bitscanreverse(colmap[c0+3], v);
+	}
+	inline void MapC1(int c0, int v) {
+		bitscanforward(colmap[c0], v);
+	}
+	void BuildCellMap() {// just colmap to cellmap same rows
+		for (int irow = 0,i=0; irow < 3; irow++) {
+			register int drow = 9 * irow;
+			for (int icol = 0; icol < 9; icol++,i++)
+				cellmap[i] = drow + colmap[icol];
+		}
+	}
+	void DumpMapping() {
+		for (int i = 0; i < 27; i++) cout << g0[i] + 1;
+		cout << " gangster  studied igang=" << igang << endl;
+		for (int i = 0; i < 27; i++) cout << cellmap[i]<<" ";
+		cout << " cells mapping" << endl;
+		for (int i = 0; i < 9; i++) cout << colmap[i];
+		cout << " columns mapping" << endl;
+		for (int i = 0; i < 9; i++) cout << digitmap[i];
+		cout << " digits mapping" << endl;
+
+	}	
+
+
+	struct PERM {
+		int i416;
+		int rows[3], cols[9], map[9];
+		inline void InitBase(int i16 = 0) {
+			i416 = i16;
+			for (int i = 0; i < 9; i++)		cols[i] = map[i] = i;
+			for (int i = 0; i < 3; i++)		rows[i] = i;
+		}
+		void Dump() {
+			cout << "perm status i416=" << i416 << endl;
+			cout << "rows " << rows[0] << rows[1] << rows[2] << endl;
+			cout << "cols " << cols[0] << cols[1] << cols[2]
+				<< cols[3] << cols[4] << cols[5] << cols[6]
+				<< cols[7] << cols[8] << endl;
+			cout << "digs " << map[0] << map[1] << map[2]
+				<< map[3] << map[4] << map[5] << map[6]
+				<< map[7] << map[8] << endl;
+		}
+	}*pout;
+	void Go3(){
+		MappingInit();
+		igang = 0;
+		for (int i = 0; i < 9; i++)digitmap[i] = g0[i];
+		DumpMapping();
+	}
+	void Go5() {
+		igang = 1;
+		int ostk12, ostk3,ostkx[3];
+		SortTcols();
+		DumpSort();
+		ostk12 = tcols_stk[tcolss[1]];// 
+		ostk3 =7- ostk12;
+		bitscanforward(ostkx[0], ostk12);
+		bitscanreverse(ostkx[1], ostk12);
+		bitscanforward(ostkx[2], ostk3);
+		cout << "stackorder " << ostkx[0] << " " << ostkx[1] << " "
+			<< ostkx[2] << endl;
+		for (int istk = 0; istk < 3; istk++) {
+			register int mask = 7 << (3* ostkx[istk]),  c0 = 3 * istk,
+				v= tcols_cols[tcolss[0]]&mask;
+			bitscanforward(colmap[c0], v);
+			if (istk < 2) {
+				v = tcols_cols[tcolss[1]] & mask;
+				bitscanforward(colmap[c0 + 1], v);
+				v = tcols_cols[tcolss[2]] & mask;
+				bitscanforward(colmap[c0 + 2], v);
+			}
+		}
+		for (int i = 0; i < 7; i++)cout << colmap[i];
+		cout << " column order 1-7" << endl;
+		int vcoma = tcols[tcolss[1]] & tcols[tcolss[3]],
+			va,vb,iva,ivb;
+		if (_popcnt32(vcoma) == 2) {
+			iva = tcolss[3], ivb = tcolss[4];
+			va = vcoma; vb = tcols[tcolss[2]] & tcols[tcolss[4]];
+		}
+		else {
+			ivb = tcolss[3], iva = tcolss[4];
+			vb = vcoma; va = tcols[tcolss[2]] & tcols[iva];
+		}
+		cout <<Char9out(va)<< " va " <<iva<< endl;
+		cout << Char9out(vb) << " vb "<<ivb << endl;
+		colmap[7] = iva;		colmap[8] = ivb;
+		// map digits using stack 3
+		for (int i = 0; i < 3; i++)
+			digitmap[i] = gb3d[colmap[6]][i];
+		Map_2_1(3, va, tcols[iva]& ~va );
+		Map_1_2(6, tcols[ivb] & ~vb, vb);
+		BuildCellMap();
+		DumpMapping();
+	}
+	void Go6() {
+		SortTcols();
+		DumpSort();
+		int vstk=tcols_stk[tcolss[0]];
+		bitscanforward(stackmap[0], vstk);
+		bitscanreverse(stackmap[1], vstk);
+		vstk = 7 - vstk;
+		bitscanforward(stackmap[2], vstk);
+		cout << "stackorder " << stackmap[0] << stackmap[1] << stackmap[2] << endl;
+		int iv2x[3]={0,0,0}, nx[3];
+		for (int i = 0; i < 3; i++) {
+			register int vi = tcols[tcolss[i]];
+			nx[i] = 0;
+			for (int j = 3; j < 6; j++) {
+				register int vj = tcols[tcolss[j]];
+				if (_popcnt32(vi & vj) == 2) {
+					nx[i] = 1; iv2x[i] = j;
+					break;
+				}
+			}
+		}
+		int nt = nx[0] + nx[1] + nx[2];
+		igang = (nt == 2) ? 2 : (nt == 3)?3 : 4;
+		cout << "n1=" << nx[0] << " n2=" << nx[1] << " n3=" << nx[2]
+			<< " ig="<<igang << endl;
+		int va, vac, var, vb, vbc, vbr, vc, vcc, vcr
+			,va2,vb2,vc2;
+		int ita1 = tcolss[0], ita2 = tcolss[iv2x[0]];
+		int itb1, itb2, itc1, itc2;
+		cout << iv2x[0] <<" " << iv2x[1] << " ivx" << endl;
+		//return;
+		if (igang != 4) {
+			// get first triplet
+			if (!nx[0]) { ita1 = tcolss[1]; ita2 = tcolss[iv2x[1]]; }
+			va = tcols[ita1]; vac=	va & tcols[ita2];
+			var = tcols[ita2] & ~va;
+			cout << Char9out(va) << " va ";
+			cout << Char9out(var) << " var ita1_2="
+				<< ita1 << ita2 << endl;
+			for (int i = 0; i < 3; i++) {
+				vb = tcols[tcolss[i]];
+				if (vb & var) {
+					itb1 = tcolss[i];
+					break;
+				}
+			}
+			itc1 = tcolss[0]+ tcolss[1]+ tcolss[2] - ita1 - itb1;
+			cout << Char9out(vb) << " vb  itb1=" << itb1 << " itc1=" << itc1 << endl;
+			vc = tcols[itc1];
+			for (int i = 3; i < 6; i++) {
+				vcc =vc& tcols[tcolss[i]];
+				if (_popcnt32(vcc) == 2) {
+					itc2 = tcolss[i];
+					vcr = tcols[tcolss[i]] & ~vc ;
+					break;
+				}
+			}
+			itb2 = tcolss[3] + tcolss[4] + tcolss[5] - ita2 - itc2;
+			vbc= vb & tcols[itb2];
+			vbr= tcols[itb2] & ~vb;
+			vcc = vc & tcols[itc2];
+			vcr = tcols[itc2] & ~vc;
+			cout << Char9out(vb) << " vb ";
+			cout  << Char9out(vbr) << " vbr itb1_2="
+				<< itb1 << itb2 << endl;
+			cout << Char9out(vc) << " vc ";
+			cout << Char9out(vcc) << " vcc ";
+			cout << Char9out(vcr) << " vcr itc1_2="
+				<< itc1 << itc2 << endl;
+			MapC2(0, tcols_cols[ita1]);
+			MapC2(1, tcols_cols[itb1]);
+			MapC2(2, tcols_cols[itc1]);
+			MapC1(6, tcols_cols[ita2]);
+			MapC1(7, tcols_cols[itb2]);
+			MapC1(8, tcols_cols[itc2]);
+			if (igang == 2) {// digits map
+				Map_2_1(0, vac, va&~vac);
+				Map_1_1_1(3, vb & var, vbc, vb & vcr);
+				Map_1_2(6, vc & ~ vcc, vcc);
+			}
+			if (igang == 3) {// digits map
+				Map_2_1(0, vac, va & ~vac);
+				Map_1_2(3, var, vb & ~var);
+				Map_1_2(6,vbr, vc & ~vbr);
+			}
+			BuildCellMap();
+			DumpMapping();
+		}
+		else {//igang=4  no 2 digit match
+			ita1 = tcolss[0]; itb1 = tcolss[1]; itc1 = tcolss[2];
+			ita2 = tcolss[3]; itb2 = tcolss[4]; itc2 = tcolss[5];
+			va = tcols[ita1]; va2 = tcols[ita2];
+			vb = tcols[itb1]; vb2 = tcols[itb2];
+			vc = tcols[itc1]; vc2 = tcols[itc2];
+			MapC2(0, tcols_cols[ita1]);
+			MapC2(1, tcols_cols[itb1]);
+			MapC2(2, tcols_cols[itc1]);
+			MapC1(6, tcols_cols[ita2]);
+			MapC1(7, tcols_cols[itb2]);
+			MapC1(8, tcols_cols[itc2]);
+			Map_1_1_1(0, va & va2, va&vb2, va & vc2);
+			Map_1_1_1(3, vb & va2, vb & vb2, vb & vc2);
+			Map_1_1_1(6, vc & va2, vc & vb2, vc & vc2);
+			BuildCellMap();
+			DumpMapping();
+		}
+
+	}
+
+	void Go7() {
+		//InitDump();
+		SortTcols();
+		DumpSort();
+		if (tcols_count[tcolss[0]] == 3)Go7_3();
+		else Go7_22();
+	}
+	void Go7_3() {
+		cout << "3111111 igang 5-6" << endl;
+		int cmapdone = tcols_cols[tcolss[0]],icmx[3];
+		MapC3(0, cmapdone);
+		Map3(tcols[tcolss[0]]);
+
+		int vc, nc;
+		for (int i = 1; i < 7; i++) {
+			nc = 0;
+			icmx[0] = tcolss[i];
+			int  v = tcols[tcolss[i]];
+			for (int j = i + 1; j < 8; j++) {
+				int js = tcolss[j],v2 = tcols[js],
+					v2c = v & v2;
+				if (_popcnt32(v2c) == 2) {
+					if (!nc) { nc++; vc = v2c; icmx[1] = js; continue; }
+					if (v2c != vc) { nc = 0; break; }
+					nc = 2; icmx[2] = js; break;
+				}
+			}
+			if (nc == 2)break;
+		}
+		if (nc == 2) {// priority to colmap
+			cout << "this is igang5" << endl;
+			MapC1(1, tcols_cols[icmx[0]]);
+			MapC1(4, tcols_cols[icmx[1]]);
+			MapC1(7, tcols_cols[icmx[2]]);
+			int va = tcols[icmx[0]], vb = tcols[icmx[1]],
+				vc= tcols[icmx[2]];// 456 457 458
+			Map_2_1(3, va & vb, va & ~vb);
+			Map_1_1_1(6, vb & ~va, vc & ~va, 0x1ff & ~(va | vb | vc));
+			cmapdone |= tcols_cols[icmx[0]] |
+				tcols_cols[icmx[1]] | tcols_cols[icmx[2]];
+			for (int j = 1,i=2; j < 8; j++) {
+				if (tcols_cols[j] & cmapdone) continue;
+				MapC1(i, tcols_cols[j]);
+				i += 3;
+			}
+			for (int j = 0; j < 8; j++)cout <<colmap[j];
+			cout << "col mapping" << endl;
+			BuildCellMap();
+			DumpMapping();
+		}
+		else {
+			cout << "this is igang6" << endl;
+		}
+	}
+	/*
+		// map digits using stack 3
+		for (int i = 0; i < 3; i++)
+			digitmap[i] = gb3d[colmap[6]][i];
+		Map_2_1(3, va, tcols[iva]& ~va );
+		Map_1_2(6, tcols[ivb] & ~vb, vb);	
+	*/
+	void Go7_22() {
+		cout << "2211111 igng 7_12" << endl;
+		int vc, nc;
+		for (int i = 2; i < 7; i++) {
+			nc = 0;
+			int  v = tcols[tcolss[i]];
+			for (int j = i + 1; j < 8; j++) {
+				int v2 = tcols[tcolss[j]],
+					v2c = v & v2;
+				if (_popcnt32(v2c) == 2) {
+					if (!nc) { nc++; vc = v2c; continue; }
+					if (v2c != vc) { nc = 0; break; }
+					nc = 2; break;
+				}
+			}
+			if (nc == 2)break;
+		}
+		if (nc == 2) cout << "this is igang12" << endl;
+		else cout << "this is igang7" << endl;
+	}
+
+	void Go8() {}
+	void Go9() {}
+	inline void PermCols(int* source, int* dest, int* cc) {
+		// unchecked dest must have same first 2 digits  as source
+		cc[2] = 3;//0+1+2 sum of indexes
+		for (int i = 0; i < 2; i++) {
+			register int c = source[i]; // digit 0_8 to find in the second minirox
+			for (int j = 0; j < 3; j++)
+				if (c == dest[j]) { cc[i] = j; cc[2] -= j;	break; }
+		}
+	}
+
+}gangminlex;
+
+void Go_c17_91() {// test band3 using gangster
+	cout << "process 91 band3 using template " << endl;
+	int gb3[9], gb3d[9][3], gdcols[9][3];
+	//int tpcols[4] = { 0111,0110,0101,011 };// column patterns
+	int max4 = 0, max5 = 0, max6 = 0, max7 = 0, max8 = 0, max9 = 0;
+	for (int ig = 0; ig < 44; ig++) {// 44 gangsters
+		memset(gb3, 0, sizeof gb3);
+		int tcolsx[9], count_tcolx[9], ntcolx = 0;
+		memset(count_tcolx, 0, sizeof count_tcolx);
+		const char* myg = t444g[ig];
+
+		gangminlex.Initt(myg);
+		continue;
+		for (int istk = 0, k = 0, icol = 0; istk < 3; istk++)
+			for (int i = 0; i < 3; i++, icol++) {
+				for (int j = 0; j < 3; j++, k++) {
+					register int c = myg[k] - '1';
+					gb3[icol] |= 1 << c;
+					gb3d[icol][j] = c;
+					gdcols[c][istk] = icol;
+				}
+				register int v = gb3[icol];
+				for (int j = 0; j < ntcolx; j++) {
+					if (v == tcolsx[j]) {
+						count_tcolx[j]++;
+						v = 0; break;
+					}
+				}
+				if (v) { count_tcolx[ntcolx]++; tcolsx[ntcolx++] = v; }
+			}
+		cout << myg << " gangster " << ig << "  studied ntcolx = " << ntcolx << endl;
+		for (int i = 0; i < ntcolx; i++) {
+			cout << Char9out(tcolsx[i]) << " " << count_tcolx[i] << endl;
+		}
+		switch (ntcolx) {
+		case 3: cout << "gangster 0" << endl;
+			continue;
+		case 5: cout << "gangster 1" << endl;
+			continue;
+		case 6: {
+			cout << "gangster 2,3,4 see minis with 2 fits" << endl;
+			int n2fits = 0;
+			for (int i = 0; i < ntcolx; i++) {
+				if (count_tcolx[i] != 2) continue;
+				for (int j = 0; j < ntcolx; j++) {
+					if (count_tcolx[j] == 2) continue;
+					if (_popcnt32(tcolsx[j] & tcolsx[i]) == 2)n2fits++;
+				}
+			}
+			switch (n2fits) {
+			case 0:cout << "gangster 4" << endl;
+				continue;
+			case 2:cout << "gangster 2" << endl;
+				continue;
+			case 3:cout << "gangster 3" << endl;
+				continue;
+			}
+			continue;
+
+		}
+		case 7: {
+			cout << "gangsters 5,6,7,12" << endl;
+			int n2fits = 0;
+			for (int i = 0; i < ntcolx; i++) {
+				if (count_tcolx[i] != 1) continue;
+				for (int j = i + 1; j < ntcolx; j++) {
+					if (count_tcolx[j] != 1) continue;
+					if (_popcnt32(tcolsx[j] & tcolsx[i]) == 2)n2fits++;
+				}
+			}
+			cout << "n2fits=" << n2fits << endl;
+			switch (n2fits) {
+			case 2:cout << "gangster 7" << endl;
+				continue;
+			case 3:cout << "gangster 12" << endl;
+				continue;
+			case 6: {cout << "gangster 5 or 6" << endl;
+				int done = 0;
+				for (int i = 0; i < ntcolx; i++) {
+					if (count_tcolx[i] != 1) continue;
+					int n2fitsv = 0;
+					for (int j = i + 1; j < ntcolx; j++) {
+						if (count_tcolx[j] != 1) continue;
+						if (_popcnt32(tcolsx[j] & tcolsx[i]) == 2)
+							if (!n2fitsv) n2fitsv = tcolsx[j] & tcolsx[i];
+							else if ((tcolsx[j] & tcolsx[i]) == n2fitsv) {
+								cout << "gangster  5" << endl;
+								done = 1; break;
+							}
+					}
+					if (done)break;
+				}
+				if(!done){
+					cout << "gangster  6" << endl;
+				}
+				continue;
+			}
+			}
+
+
+			continue;
+		}
+
+		}
+
+	}
+	return;
+
+}
+struct B3PAT {
+	int cx[2], pat;
+
+};
+struct B3PATCUM {
+	int b0[27], pat, index;
+	BANDMINLEX::PERM p;
+	void Init(B3PAT& o,int c1,int dig) {
+		memset(b0, 255, sizeof b0);//  init to -1
+		pat = o.pat;
+		b0[c1] = b0[o.cx[0]] = b0[o.cx[1]] = dig;
+	}
+	void Cum(B3PATCUM & oc,B3PAT& o, int c1, int dig) {
+		*this=oc;//  previous status
+		pat |= o.pat;
+		b0[c1] = b0[o.cx[0]] = b0[o.cx[1]] = dig;
+	}
+	void SetIndex() {
+		bandminlex.Getmin(b0, &p);
+		index = p.i416;	}
+	void DumpB0() {
+		for (int i = 0; i < 27; i++) cout <<b0[i] + 1;
+		cout <<"\t"<<Char27out(pat) << endl;
+	}
+
+};
+void Getpats18_b(int row, int* cols,  B3PAT* b3pats) {
+	int rowsx = 7 ^ (1 << row), row1, row2;
+	bitscanforward(row1, rowsx); bitscanreverse(row2, rowsx);
+	int c1 = 9 * row1 + cols[1], c2 = 9 * row2 + cols[2],
+		c3 = 9 * row1 + cols[2], c4 = 9 * row2 + cols[1];
+	b3pats[0].pat = 1 << c1 | 1 << c2;
+	b3pats[1].pat = 1 << c3 | 1 << c4;
+	b3pats[0].cx[0] = c1;
+	b3pats[0].cx[1] = c2;
+	b3pats[1].cx[0] = c3;
+	b3pats[1].cx[1] = c4;
+}
+
+
+void Go_c17_92() {// test band3 using gangster
+	cout << "process 91 band3 using template " << endl;
+	int gb3[9], gb3d[9][3], gdcols[9][3];
+	//int tpcols[4] = { 0111,0110,0101,011 };// column patterns
+	int max4 = 0, max5 = 0, max6 = 0, max7 = 0, max8 = 0, max9 = 0;
+	B3PAT b3pats[9][2];
+	B3PATCUM b3c1[2], b3c2[4], b3c3[8], b3c4[16], b3c5[32], b3c6[32],
+		b3c7[32], b3c8[32], b3c9[32];
+	for (int ig = 0; ig < 44; ig++) {// 44 gangsters
+		//if (ig != 4)continue;
+		memset(gb3, 0, sizeof gb3);
+		const char* myg = t444g[ig];
+		cout << myg << " gangster studied" << endl;
+		for(int istk=0, k = 0,icol=0;istk<3;istk++)
+			for(int i=0;i<3;i++,icol++)
+				for (int j = 0; j < 3; j++,k++) {
+					register int c = myg[k] - '1';
+					gb3[icol] |= 1 << c;
+					gb3d[icol][j] = c;
+					gdcols[c][istk] = icol;
+				}
+		// build start compat
+		int  nvalid=0,nb3c2 = 0, nb3c3 = 0,	perm2[3], perm3[3];
+
+
+		for (int i = 0; i < 3; i++)
+			Getpats18_b(i, gdcols[i], b3pats[i]);
+
+		for (int i = 0; i < 2; i++) 
+			b3c1[i].Init(b3pats[0][i], 0,0);
+
+		for (int i = 0; i < 2; i++) {
+			register int p = b3pats[1][i].pat;
+			for (int j = 0; j < 2; j++) {
+				register int pj = b3c1[j].pat;
+				if (!(p & pj))
+					b3c2[nb3c2++].Cum(b3c1[j], b3pats[1][i], 9, 1);
+			}
+		}
+		for (int i = 0; i < 2; i++) {
+			register int p = b3pats[2][i].pat;
+			for (int j = 0; j < nb3c2; j++) {
+				register int pj = b3c2[j].pat;
+				if (!(p & pj))
+					b3c3[nb3c3++].Cum(b3c2[j], b3pats[2][i], 18,2);
+			}
+		}
+		if (1) {
+			cout << "found " << nb3c3 << " triplets" << endl;
+			for (int j = 0; j < nb3c3; j++)
+				b3c3[j].DumpB0();
+			//continue;
+		}
+		// push to col2 digits 3 4 5 / 4 5 6
+		for (int ip2 = 0; ip2 < 6; ip2++) {
+			int nb3c4 = 0, nb3c5=0, nb3c6 = 0;
+			for (int jp2 = 0; jp2 < 3; jp2++)
+				perm2[jp2] = gb3d[1][tpermgand[ip2][jp2]];
+			for (int i = 0; i < 3; i++) {
+				register int dig = perm2[i];
+				Getpats18_b(i, gdcols[dig], b3pats[dig]);
+			}
+			// add cell row 1
+			int d4 = perm2[0];
+			for (int i = 0; i < 2; i++) {
+				register int p = b3pats[d4][i].pat;
+				for (int j = 0; j < nb3c3; j++) {
+					register int pj = b3c3[j].pat;
+					if (!(p & pj))
+						b3c4[nb3c4++].Cum(b3c3[j], b3pats[d4][i], 1, d4);
+				}
+			}
+
+			int d5 = perm2[1];
+			for (int i = 0; i < 2; i++) {
+				register int p = b3pats[d5][i].pat;
+				for (int j = 0; j < nb3c4; j++) {
+					register int pj = b3c4[j].pat;
+					if (!(p & pj))
+						b3c5[nb3c5++].Cum(b3c4[j], b3pats[d5][i], 10, d5);
+				}
+			}
+			int d6 = perm2[2];
+			for (int i = 0; i < 2; i++) {
+				register int p = b3pats[d6][i].pat;
+				for (int j = 0; j < nb3c5; j++) {
+					register int pj = b3c5[j].pat;
+					if (!(p & pj))
+						b3c6[nb3c6++].Cum(b3c5[j], b3pats[d6][i], 19, d6);
+				}
+			}
+			if (!nb3c6) continue;
+			if (1) {
+				cout << "found " << nb3c6 << " six" << endl;
+				for (int j = 0; j < nb3c6; j++)b3c6[j].DumpB0();
+				//continue;
+			}
+			for (int ip3 = 0; ip3 < 6; ip3++) {
+				int nb3c7 = 0, nb3c8 = 0, nb3c9 = 0;
+				for (int jp3 = 0; jp3 < 3; jp3++)
+					perm3[jp3] = gb3d[2][tpermgand[ip3][jp3]];
+				for (int i = 0; i < 3; i++) {
+					register int dig = perm3[i];
+					Getpats18_b(i, gdcols[dig], b3pats[dig]);
+				}
+
+				int d7 = perm3[0];
+				for (int i = 0; i < 2; i++) {
+					register int p = b3pats[d7][i].pat;
+					for (int j = 0; j < nb3c6; j++) {
+						register int pj = b3c6[j].pat;
+						if (!(p & pj))
+							b3c7[nb3c7++].Cum(b3c6[j], b3pats[d7][i], 2, d7);
+					}
+				}
+				if (!nb3c7) continue;
+				int d8 = perm3[1];
+				for (int i = 0; i < 2; i++) {
+					register int p = b3pats[d8][i].pat;
+					for (int j = 0; j < nb3c7; j++) {
+						register int pj = b3c7[j].pat;
+						if (!(p & pj))
+							b3c8[nb3c8++].Cum(b3c7[j], b3pats[d8][i], 11, d8);
+					}
+				}
+				if (!nb3c8) continue;
+				int d9 = perm3[2];
+				for (int i = 0; i < 2; i++) {
+					register int p = b3pats[d9][i].pat;
+					for (int j = 0; j < nb3c8; j++) {
+						register int pj = b3c8[j].pat;
+						if (!(p & pj)) {
+							nvalid++;
+							B3PATCUM& myb3c = b3c9[nb3c9++];
+							myb3c.Cum(b3c8[j], b3pats[d9][i], 20, d9);
+							myb3c.SetIndex();
+							for (int i = 0; i < 27; i++)
+								fout1 << myb3c.b0[i] + 1;
+							fout1 << ";" << ig << ";" << nvalid << "," << myb3c.index << endl;
+						}
+					}
+				}
+				if (!nb3c9) continue;
+				cout << "found " << nb3c9 << " nine full cum="
+					<< nvalid<< endl;
+				if (nb3c9 > max9) max9 = nb3c9;
+				if (nb3c8 > max8) max8 = nb3c8;
+				if (nb3c7 > max7) max7 = nb3c7;
+			}
+
+			if (nb3c6 > max6) max6 = nb3c6;
+			if (nb3c5 > max5) max5 = nb3c5;
+			if (nb3c4 > max4) max4 = nb3c4;
+		}
+
+	}
+	cout << " end max 4 5 6 =" << max4 << " " << max5 << " " << max6 << endl
+		<< " max  7 8 9=" << max7 << " " << max8 << " " << max9	<< endl;
+
+}
+
