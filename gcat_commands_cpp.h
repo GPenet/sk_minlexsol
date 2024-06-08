@@ -690,6 +690,8 @@ const char* t444g[44] = {
 
 int tpermgand[6][3] = { {0,1,2},{0,2,1},
 	{1,0,2},{1,2,0},{2,0,1},{2,1,0} };
+int tpermg9stk[3][9] = {
+	{0,1,2,3,4,5,6,7,8},{0,1,2,6,7,8,3,4,5},{3,4,5,6,7,8,0,1,2 } };
 void Getpats18(int row, int* cols, int* pats) {
 	int rowsx = 7 ^ (1 << row), row1, row2;
 	bitscanforward(row1, rowsx); bitscanreverse(row2, rowsx);
@@ -704,7 +706,6 @@ struct GANGMINLEX {// receive a band send back i416 and morphing data
 	int tcols[9], tcols_cols[9], tcols_count[9], tcols_stk[9], ntcols ;
 	int tcolss[9];
 	int t2x3[3], t2x3i[3], nt2x3, t2x2[20], t2x2i[20], nt2x2;
-	int pat2sc[2], pat2s[2],pat2sv5;
 	int cellmap[27], digitmap[9],igang,colmap[9],stackmap[3],stackmapb[3];
 	void MappingInit() {
 		for (int i = 0; i < 27; i++) cellmap[i] = i;
@@ -773,33 +774,6 @@ struct GANGMINLEX {// receive a band send back i416 and morphing data
 		memset(cellmap, 255, sizeof cellmap);
 		memset(colmap, 255, sizeof colmap);
 		memset(digitmap, 255, sizeof digitmap);
-	}
-/*
-... . 1 1 ..1 
-..1 . . . 11. 
-11. 1 . . ... 
-
-... . . . 111 
-... 1 1 1 ... 
-111 . . . ... */
-	int IsPat2stkA(int* a, int* b) {//123456789 123457689
-		int n  = 0;
-		for (int i = 0; i < 3; i++) {
-			int v1 = a[i];
-			for (int j =0; j < 3; j++) {
-				int v2= b[j],v1v2 = v1 & v2;
-				if (_popcnt32(v1v2) == 2) {// pair v1v2
-					if (n == 2) return 0;
-					pat2sc[n ] = v1v2;
-					pat2s[n ++] =v1|v2;
-				}
-			}
-		}
-		if (n != 2) return 0;
-		int w = pat2s[0] | pat2s[1];
-		if (_popcnt32(w) != 8) return 0;
-		pat2sv5 = 0x1ff ^ w;
-		return 1;
 	}
 	void DumpSort() {
 		for (int i = 0; i < 27; i++) cout << g0[i] + 1;
@@ -1279,13 +1253,12 @@ struct GANGMINLEX {// receive a band send back i416 and morphing data
 		DumpMapping();
 		Check();
 	}
-
 	void Go8() {
 		SortTcols();
-		DumpSort8();
+		DumpSort();
 		InitNoMap();
 		// all 123 456 789 |   123 457 689
-		int v12,v45,v89,v3,v4,v5,v6,v7,v8,v9;
+		int v12,v45,v89,v1,v2,v3,v4,v5,v6,v7,v8,v9;
 		int it1 = tcolss[0],st12= tcols_stk[it1],v123= tcols[it1],
 			cols12= tcols_cols[it1];
 		int itk12[45], itk3[3];// split tcolss
@@ -1436,102 +1409,162 @@ struct GANGMINLEX {// receive a band send back i416 and morphing data
 		}
 		else {// 15-18 14/568 
 			cout << " expected 15-18" << endl;
-			v45 = vaxc;		v89 = vbxc; //  default
+			v45 = vaxc;		v89 = vbxc; 
+
+
 			int it1,xc1, x1;
 			for (int i = 0; i < 3; i++) {
 				it1 = st3it[i]; x1 = tcols[it1];
 				xc1 = v45 & x1;
-				if (xc1) break;
+				if (xc1==v45) break;
+				if ((x1 & v89) == v89)  {//exchange v45 v89
+					v45 = vbxc;		v89 = vaxc;
+					xc1 = v45;
+					break;
+				}
+				//if (xc1) break;
 			}
+			{//  default
+				int x;// default v6 v7
+				bitscanforward(x, v45);
+				v4 = 1 << x;
+				v5 = v45 & ~v4;
+				bitscanforward(x, v89);
+				v8 = 1 << x;
+				v9 = v89 & ~v8;
+			}
+
 			if (xc1 == v45) {
+				v1 = x1 & ~xc1;
 				//15 145 267 389
 				//16 145 268 379
 				int it2, xc2, x2;
 				for (int i = 0; i < 3; i++) {
-					it2 = st3it[i]; x2 = tcols[it1];
+					it2 = st3it[i]; x2 = tcols[it2];
 					xc2 = v89 & x2;
 					if (xc2) break;
+				}
+				if (xc2 == v89) {//15 145 267 389
+					igang = 15;
+					v3 = x2 & ~xc2;
+					v2=v123 & ~(v1 | v3);
+				}				
+				else {//16 145 268 379
+					igang = 16;
+					if (x2 & v6) {// v89 default
+						v2 = v123 & x2;
+						v3 = v123 & ~(v1 | v2);
+					}
+					else {
+						v3 = v123 & x2;
+						v2 = v123 & ~(v1 | v3);
+						v9= v89 & x2;
+						v8 = v89 & ~v9;
+					}
 				}
 			}
 			else {
 				int it2, xc2, x2;
 				for (int i = 0; i < 3; i++) {
-					it2 = st3it[i]; x2 = tcols[it1];
+					it2 = st3it[i]; x2 = tcols[it2];
 					xc2 = vabxr & x2;//67
 					if (xc2) break;
 				}
-				//17 146 258 379
-				//18 148 259 367
+				if (xc2 == vabxr) {//18 148 259 367
+					igang = 18;
+					// use default 45 67
+					v3 = x2 & ~xc2;
+					if (x1 & v4) {// default 89
+						v1 = v123 & x1;
+						v2 = v123 & ~(v1 | v3);
+					}
+					else {
+						v2 = v123 & x1;
+						v1 = v123 & ~(v2 | v3);
+						v9 = v89 & x2;
+						v8 = v89 & ~v9;
+
+					}
+				}
+				else {//17 146 258 379
+					igang = 17;
+					for (int i = 0; i < 3; i++) {
+						it1 = st3it[i]; x1 = tcols[it1];
+						xc1 = v45 & x1;
+						if (!xc1) 	break;						
+					}
+					v3 = v123 & x1;
+					v7 = vabxr & x1;
+					v9 = v89 & x1;
+					v8 = v89 & ~v9;
+					v6 = vabxr & ~v7;
+					for (int i = 0; i < 3; i++) {
+						it1 = st3it[i]; x1 = tcols[it1];
+						xc1 = v6 & x1;
+						if (xc1) 	break;
+					}
+					v1 = x1 & v123;
+					v4 = x1 & v45;
+					v2 = v123 & ~(v1 | v3);
+					v5 =v45&~v4;
+				}
 			}
-			 
+			// mapping digits and columns
+			{
+				Map_1_1_1(0, v1, v2, v3);
+				Map_1_1_1(3, v4, v5, v6);
+				Map_1_1_1(6, v7, v8, v9);
+				for (int i = 0; i < 3; i++) {
+					int it = st3it[i], v = tcols[it], col = tcols_cols[it];
+					if(v&v1)MapC1(6, col);
+					else if (v & v2)MapC1(7, col);
+					else MapC1(8, col);
+				}
+				int v457 = v45 | v7, v456 = v45 | v6,
+					v89 = v8 | v9, v689 = v6 | v89, v789 = v7 | v89;
+				for (int i = 0; i < 4; i++) {
+					int it = itk12[i], v = tcols[it], col = tcols_cols[it];
+					if (v == v456) {
+						MapC1(1, col);
+						int stkn;
+						bitscanforward(stkn, tcols_stk[it]);
+						int mask = 7 << (3 * stkn);
+						MapC1(0, cols12 & mask);
+						MapC1(3, cols12 & ~mask);
+					}
+					else if (v == v457)MapC1(4, col);
+					else if (v == v789)MapC1(2, col);
+					else MapC1(5, col);
+				}
+			}
+			BuildCellMap();
+			DumpMapping();
+			Check();
 		}
 	}
-	void Go9() 	{
-		int ispat2a = 0;
-		int v12, v45, v89, v3, v4, v5, v6, v7, v8, v9;
-		if (IsPat2stkA(&tcols[0], &tcols[3])) {
-			cout << " possible 01 " << endl;
-			ispat2a = 1;
-			for (int i = 0; i < 9; i++)tcolss[i]=i;
-		}
-		else if (IsPat2stkA(&tcols[0], &tcols[6])) {
-			cout << " possible 02 " << endl;
-			ispat2a = 1;
-			for (int i = 0; i < 3; i++)tcolss[i] = i;
-			for (int i = 6; i < 9; i++)tcolss[i-3] = i;
-			for (int i = 3; i < 6; i++)tcolss[i + 3] = i;
-		}
-		else if (IsPat2stkA(&tcols[3], &tcols[6])) {
-			ispat2a = 1;
-			cout << " possible 12 " << endl;
-			for (int i = 3; i < 9; i++)tcolss[i - 3] = i;
-			for (int i = 0; i < 3; i++)tcolss[i+6] = i;
-		}
-		if (!ispat2a) {	Go9_no_2a(); return;}
-		v5 =pat2sv5;
-		cout << Char9out(v5) << "  v5 " << endl;
-		for (int i = 6; i < 9; i++) {
-			int it=tcolss[i],v= tcols[it];
-			if (v & v5) {
-				int v12 = v & ~v5;
-				if (v12 == pat2sc[0])	cout << Char9out(v12) << " v12="  << endl;
-				if (v12 == pat2sc[1])	cout << Char9out(v12) << " v12="  << endl;
-				else v12 = 0;
-			}
-			
-		}
-		DumpSort();
-		return;
+	//================ all columns different patterns
+	void Go9SetTripletsPairs() {
 		nt2x2 = nt2x3 = 0;
 		for (int i = 0; i < 3; i++) {
 			int v1 = tcols[i];
 			for (int j = 3; j < 6; j++) {
-				int v1v2=v1& tcols[j];
+				int v1v2 = v1 & tcols[j];
 				if (_popcnt32(v1v2) != 2) continue;
+				int nt2x3r = nt2x3;
 				for (int k = 6; k < 9; k++) {
 					int v1v2v3 = v1v2 & tcols[k];
-					if (v1v2v3==v1v2) {
+					if (v1v2v3 == v1v2) {
 						t2x3[nt2x3] = v1v2v3;
 						t2x3i[nt2x3++] = (1 << i) | (1 << j) | (1 << k);
 					}
-					else {// pair v1v2
-						t2x2[nt2x2] = v1v2;
-						t2x2i[nt2x2++] = (1 << i) | (1 << j);
-					}	
+				}
+				if(nt2x3r == nt2x3){// pair v1v2
+					t2x2[nt2x2] = v1v2;
+					t2x2i[nt2x2++] = (1 << i) | (1 << j);
 				}
 			}
 		}
 		for (int i = 0; i < 3; i++) {
-			int v1 = tcols[i];
-			for (int j = 6; j < 9; j++) {
-				int v1v2 = v1 & tcols[j];
-				if (_popcnt32(v1v2) == 2)  {// pair v1v2
-					t2x2[nt2x2] = v1v2;
-					t2x2i[nt2x2++] = (1 << i) | (1 << j);					
-				}
-			}
-		}
-		for (int i = 3; i <6; i++) {
 			int v1 = tcols[i];
 			for (int j = 6; j < 9; j++) {
 				int v1v2 = v1 & tcols[j];
@@ -1541,7 +1574,147 @@ struct GANGMINLEX {// receive a band send back i416 and morphing data
 				}
 			}
 		}
-		cout << "go9 see triplets nt2x3="<< nt2x3 <<"  nt2x2=" << nt2x2 << endl;
+		for (int i = 3; i < 6; i++) {
+			int v1 = tcols[i];
+			for (int j = 6; j < 9; j++) {
+				int v1v2 = v1 & tcols[j];
+				if (_popcnt32(v1v2) == 2) {// pair v1v2
+					t2x2[nt2x2] = v1v2;
+					t2x2i[nt2x2++] = (1 << i) | (1 << j);
+				}
+			}
+		}
+		cout << "go9 see triplets nt2x3=" << nt2x3 << "  nt2x2=" << nt2x2 << endl;
+	}
+
+	int pat2sc[3], pat2s[3], pat2sv5;
+	int IsPat2stkA(int* a, int* b) {//123456789 123457689
+		int n = 0;
+		for (int i = 0; i < 3; i++) {
+			int v1 = a[i];
+			for (int j = 0; j < 3; j++) {
+				int v2 = b[j], v1v2 = v1 & v2;
+				if (_popcnt32(v1v2) == 2) {// pair v1v2
+					if (n == 2) return 0;
+					pat2sc[n] = v1v2;
+					pat2s[n++] = v1 | v2;
+				}
+			}
+		}
+		if (n != 2) return 0;
+		int w = pat2s[0] | pat2s[1];
+		if (_popcnt32(w) != 8) return 0;
+		pat2sv5 = 0x1ff ^ w;
+		return 1;
+	}
+	
+		/* typical pattern for stacks12   123 456 789   123 457 689
+	... . 1 1 ..1   most common pattern by far
+	..1 . . . 11.
+	11. 1 . . ...
+
+	... . . . 111
+	... 1 1 1 ...
+	111 . . . ... */
+	struct STACKS12 {
+		int v2c[3], v2[3], v2ab, v5;
+	}go9stx[3];
+	int g9stxv, g9stx5,g9stx56;
+	int Go9PS12(int ip) {
+		int* p = tpermg9stk[ip];// order of the columns 
+		STACKS12& s = go9stx[ip]; //storing results
+		int n = 0;
+		for (int ii = 0; ii < 3; ii++) {
+			int i = p[ii], v1 = tcols[i];
+			for (int jj = 3; jj < 6; jj++) {
+				int j = p[jj], v2 = tcols[j], v1v2 = v1 & v2;
+				if (_popcnt32(v1v2) == 2) {// pair v1v2
+					if (n == 2) return 0;
+					s.v2c[n] = v1v2;
+					s.v2[n++] = v1 | v2;
+				}
+			}
+		}
+		if (n != 2) return 0;
+		int w = s.v2[0] | s.v2[1];
+		if (_popcnt32(w) != 8) return 0;
+		s.v5 = 0x1ff ^ w;
+		//cout << Char9out(s.v5) << " v5 after ip= " << ip << endl;
+		return 1; 
+	}
+	int Go9PS12B(int ip) {
+		int* p = tpermg9stk[ip];// order of the columns 
+		STACKS12& s = go9stx[ip]; //storing results
+		int n = 0;
+		for (int ii = 0; ii < 3; ii++) {
+			int i = p[ii], v1 = tcols[i];
+			for (int jj = 3; jj < 6; jj++) {
+				int j = p[jj], v2 = tcols[j], v1v2 = v1 & v2;
+				if (_popcnt32(v1v2) == 2) {// pair v1v2
+					s.v2c[n] = v1v2;
+					s.v2[n++] = v1 | v2;
+				}
+			}
+		}
+		if (n != 3) return 0;
+		int w = s.v2c[0] | s.v2c[1] | s.v2c[2];
+		s.v5 = 0x1ff ^ w;
+		cout << Char9out(w) << " ";
+		cout << Char9out(s.v5) << " pat b after ip= " << ip << endl;
+		return 1;
+	}
+	void Go9SetPossibleStacks12() {
+		g9stxv = g9stx5 = g9stx56= 0;
+		for (int ip = 0; ip < 3; ip++) {
+			int* p = tpermg9stk[ip];// order of the columns 
+			STACKS12& s = go9stx[ip]; //storing results
+			int ir = Go9PS12(ip);
+			if (ir) {
+				cout <<Char9out(s.v5)<< " v5 for  possible ip= "<<ip << endl;
+				if (nt2x3) {
+					int x5 = s.v5;
+					for (int i = 6; i < 9; i++) {
+						int it = p[i], v = tcols[it];
+						if (v & x5) {
+							int x12 = v & ~x5;
+							if (x12 == s.v2c[0] || x12 == s.v2c[1]) {
+								if(!g9stx5)g9stx56= g9stxv = 0;
+								g9stx5 |= 1 << ip;
+								break;
+							}
+						}
+					}
+					g9stx56 |= 1 << ip;
+				}
+				else if (g9stx56) continue;
+				cout << " possible added  " << endl;
+				g9stxv |= 1 << ip;
+			}
+		}
+	}
+	void Go9SetPossibleStacks12B() {
+		g9stxv = g9stx5 = g9stx56 = 0;
+		for (int ip = 0; ip < 3; ip++) {
+			int* p = tpermg9stk[ip];// order of the columns 
+			STACKS12& s = go9stx[ip]; //storing results
+			int ir = Go9PS12B(ip);
+			if (ir) {
+				g9stxv |= 1 << ip;
+			}
+		}
+	}
+	void Go9() 	{
+		//SortTcols();
+		//DumpSort();
+		Go9SetTripletsPairs();
+		Go9SetPossibleStacks12();
+		cout << "go9 nt2x3=" << nt2x3 << "  nt2x2=" << nt2x2
+			<< " g9stxv = " << g9stxv << " x5 = " << g9stx5
+			<< " x56 = " << g9stx56 << endl;
+		if(!g9stxv) { Go9_no_2a(); return; }
+		return;
+
+
 		switch (nt2x3) {
 			case 0: Go9_0t(); return;
 			case 1: Go9_1t(); return;
@@ -1549,11 +1722,27 @@ struct GANGMINLEX {// receive a band send back i416 and morphing data
 			case 3: Go9_3t(); return;
 		}
 	}
-	void Go9_no_2a() {//0;43 2;38 3;42 4;33,36 5;34 6 ;40
-		//10;29,31,35,37 11;32 13;30 15;41
-		for (int i = 0; i < 27; i++) cout << g0[i] + 1;
-		cout << " gangster  studied 9 cols "  << endl;
+	/*
+123456789 124378569 129356478  39 2   3 6
+123456789 124378569 135279468  40 8   0 6
+123456789 124378569 137245689  41 9   0 9
+123456789 124378569 157268349  42 6   0 3
 
+123456789 147258369 159267348  43 2   0 0
+*/
+	void Go9_no_2a() {// 39_43
+		for (int i = 0; i < 27; i++) cout << g0[i] + 1;
+		cout << " gangster  studied 9 cols 39_43 "
+			<< nt2x3<<" "<< nt2x2 << endl;
+		if (!nt2x2) { Go9_43(); return; }
+		Go9SetPossibleStacks12B();
+		cout << "g9stxv=" << g9stxv << endl;
+		SortTcols();
+		DumpSort();
+
+	}
+	void Go9_43() {
+		igang = 43;// last gang no match
 	}
 
 	void Go9_0t(){//0;43 2;38 3;42 4;33,36 5;34 6 ;40
@@ -1587,9 +1776,9 @@ void Go_c17_91() {// test band3 using gangster
 	int gb3[9], gb3d[9][3], gdcols[9][3];
 	//int tpcols[4] = { 0111,0110,0101,011 };// column patterns
 	int max4 = 0, max5 = 0, max6 = 0, max7 = 0, max8 = 0, max9 = 0;
-	for (int ig = 15; ig < 44; ig++) {// 44 gangsters
-		if (ig == 12)continue;
-		//if (ig > 18)continue;
+	for (int ig = 10; ig < 44; ig++) {// 44 gangsters
+		//if (ig <  19)continue;
+		//if (ig >20)continue;
 		cout << "igang expected=" << ig << endl;
 		memset(gb3, 0, sizeof gb3);
 		int tcolsx[9], count_tcolx[9], ntcolx = 0;
