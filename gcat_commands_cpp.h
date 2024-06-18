@@ -1608,6 +1608,11 @@ struct GANGMINLEX {// receive a band send back i416 and morphing data
 			x = v2i[0]; v2i[0] = v2i[1]; v2i[1] = x;
 			x = v2j[0]; v2j[0] = v2j[1]; v2j[1] = x;
 		}
+		void PermIJ() {// exchange stacks 1 2
+			int x;
+			x = v2i[0]; v2i[0] = v2j[0]; v2j[0] = x;
+			x = v2i[1]; v2i[1] = v2j[1]; v2j[1] = x;
+		}
 		void Dump(){
 			cout << "stack12 status  " << endl; 
 			cout << Char9out(v2[0]) << "   " ;
@@ -1802,6 +1807,12 @@ struct GANGMINLEX {// receive a band send back i416 and morphing data
 			}
 		}
 	}
+	void Go9End(int ir) {
+		if(ir!=1 )return;
+		if (!BuildCellMap()) return;
+		DumpMapping();
+		Check();
+	}
 	void Go9() {
 		Go9SetTripletsPairs();
 		Go9SetPossibleStacks12();
@@ -1815,6 +1826,7 @@ struct GANGMINLEX {// receive a band send back i416 and morphing data
 		for (int i = 0, bit = 1; i < 3; i++, bit <<= 1) if (bit & g9stxv) {
 			STACKS12 z = go9stx[i];//int v2c[3], v2[3], v2ab, v5;
 			z.Dump();
+			int ir;
 			if (nt2x3) {
 				for (int ii = 0; ii < nt2x3; ii++) {
 					int va = t2x3[ii], ita = t2x3i[ii];
@@ -1822,20 +1834,45 @@ struct GANGMINLEX {// receive a band send back i416 and morphing data
 					if (va != z.v2c[0]) continue;
 					cout << "must go with" << endl;
 					z.Dump();
-					int ir = Go9a(z);
+					ir = Go9a(z);
 					cout << ir << " back from goa" << endl;
+					Go9End(ir);
+					if (ir < 0) {
+						cout << " try reverse stack1 stack2" << endl;
+						z.PermIJ();
+						ir = Go9a(z);
+						cout << ir << " back from goa" << endl;
+						Go9End(ir);
+					}
 				}
 			}
 			else {// try both
 				cout << "try first " << endl;
 				z.Dump();
-				int ir = Go9a(z);
+				ir = Go9a(z);
 				cout << ir << " back from goa first" << endl;
+				Go9End(ir);
+				if (ir < 0) {
+					cout << " try reverse stack1 stack2" << endl;
+					z.PermIJ();
+					int ir = Go9a(z);
+					cout << ir << " back from goa first reverse" << endl;
+					Go9End(ir);
+				}
+
 				z.Perm();
 				cout << "try second  " << endl;
 				z.Dump();
 				ir = Go9a(z);
 				cout << ir << " back from goa second" << endl;
+				Go9End(ir);
+				if (ir < 0) {
+					cout << " try reverse stack1 stack2" << endl;
+					z.PermIJ();
+					ir = Go9a(z);
+					cout << ir << " back from goa second reverse" << endl;
+					Go9End(ir);
+				}
 			}
 		}
 	}
@@ -1893,6 +1930,7 @@ struct GANGMINLEX {// receive a band send back i416 and morphing data
 					MapC1(6, tcols_cols[j]);
 					int x = s.vs3_3 & ~s.v3;
 					if (vy & s.v5) {// 348 367 368 378 
+						cout << " 125" << endl;
 						if (x & s.v4 ) {// 348 679
 							if (!(x & s.v89)) return -1;
 							s.v8 = x & ~s.v4; s.v9 = s.v89 & ~s.v8;
@@ -1901,9 +1939,11 @@ struct GANGMINLEX {// receive a band send back i416 and morphing data
 							return 1;
 						}
 						else if (x & s.v6) {//  367 368 g 20 21
+							cout << "367 368" << endl;
 							if (x & s.v7) {
 								igang = 20;
 								Map_1_2(6, s.v7, s.v89);
+								return 1;
 							}
 							else if (x & s.v89) {
 								s.v8 = x & ~s.v6; s.v9 = s.v89 & ~s.v8;
@@ -1914,6 +1954,7 @@ struct GANGMINLEX {// receive a band send back i416 and morphing data
 							else return -1;
 						}
 						else if (x & s.v7) {//378
+							cout << " 378" << endl;
 							s.v8 = x & ~s.v7; s.v9 = s.v89 & ~s.v8;
 							igang = 22;
 							Map_1_1_1(6, s.v7, s.v8, s.v9);
@@ -1923,6 +1964,8 @@ struct GANGMINLEX {// receive a band send back i416 and morphing data
 						else return -1;
 					}
 					else if (vy & s.v6) {//	358 378 389
+						cout << " 126" << endl;
+						if (!(x & s.v89)) return -1;
 						if (x & s.v5) {
 							s.v8 = x & ~s.v5; s.v9 = s.v89 & ~s.v8;
 							igang = 23;
@@ -1946,10 +1989,10 @@ struct GANGMINLEX {// receive a band send back i416 and morphing data
 						}
 						else return -1;
 					}
-					else if (vy & s.v89) {// 345 356 359
-						s.v8 = x & ~s.v12; s.v9 = s.v89 & ~s.v8;
-						Map_1_1_1(6, s.v7, s.v8, s.v9);
+					else if (vy & s.v89) {// 128 and 345 356 359
 						if (!(x & s.v5)) return -1;
+						s.v8 = vy & ~s.v12; s.v9 = s.v89 & ~s.v8;
+						Map_1_1_1(6, s.v7, s.v8, s.v9);
 						if (x &s.v4 ) { igang = 26; return 1; }
 						if (x &s.v6 ) { igang = 27; return 1; }
 						if (x &s.v9 ) { igang = 28; return 1; }
@@ -1967,14 +2010,16 @@ struct GANGMINLEX {// receive a band send back i416 and morphing data
 				if (vy & s.v3) {
 					int x = vy & ~s.v3;
 					if (!(x & s.v12)) {// 158 267 349 ig 38
+						cout << "158 in stack 3" << endl;
 						if (!(x & s.v4)) return -1;
 						if (!(x & s.v89)) return -1;
+
 						igang = 38;
 						MapC1(8, tcols_cols[j]);
 						s.v9 = x & s.v89; s.v8 = s.v89 & ~s.v9;
 						int j1=s.id3, j2, v1,v2;
-						for (int i = 0; i < 3; i++, j1++) {// find v3
-							int vj1 = tcols[j];
+						for (int i = 0; i < 3; i++, j1++) {// find v5
+							int vj1 = tcols[j1];
 							if (vj1 & s.v5) {// expected 158
 								if (!(vj1 & s.v8)) return -1;
 								if (!(vj1 & s.v12)) return -1;
@@ -1989,6 +2034,7 @@ struct GANGMINLEX {// receive a band send back i416 and morphing data
 						Map_1_1_1(6, s.v7, s.v8, s.v9);
 						return 1;
 					}
+					cout << "13x in stack 3" << endl;
 					// 134 135 136 137 138
 					MapC1(6, tcols_cols[j]);
 					s.j6 = j;
@@ -1996,16 +2042,20 @@ struct GANGMINLEX {// receive a band send back i416 and morphing data
 					Map_1_1_1(0, v1, v2, s.v3);
 					int j2= s.id3,vj2;// find 2..
 					for (int i = 0; i < 3; i++, j2++) {// find v3
-						vj2 = tcols[j];
+						vj2 = tcols[j2];
 						if (vj2 & v2) {
 							MapC1(7, tcols_cols[j2]);
 							break;
 						}
 					}
 					int j3 = 3 * s.id3 + 3 - s.j6 - j2,vj3= tcols[j3];
+					cout << Char9out(vj2) << " vj2 j2=" << j2 << endl;
+					cout << Char9out(vj3) << " vj3 j3=" << j3 << endl;
 					MapC1(8, tcols_cols[j3]);
 					int y = x & ~v1;
 					if (y == s.v4) {//134 258 679 or  268 579  29 30
+						cout << "134 in stack 3" << endl;
+
 						if (vj2 & s.v7) return -1;
 						if(! (vj2 & s.v89) )return -1;
 						if (!(vj3 & s.v89))return -1;
@@ -2016,6 +2066,7 @@ struct GANGMINLEX {// receive a band send back i416 and morphing data
 						return 1;
 					}
 					else if (y == s.v5) {//135 268 479 or  278 469  31 32
+						cout << "135 in stack 3" << endl;
 						if (!(vj3 & s.v4))return -1;
 						if (!(vj2 & s.v89))return -1;
 						if (!(vj3 & s.v89))return -1;
@@ -2027,6 +2078,7 @@ struct GANGMINLEX {// receive a band send back i416 and morphing data
 
 					}
 					else if (y == s.v6) {//136 258 479 or  278 459  33 34
+						cout << "136 in stack 3" << endl;
 						if (!(vj3 & s.v4))return -1;
 						if (!(vj2 & s.v89))return -1;
 						if (!(vj3 & s.v89))return -1;
@@ -2037,6 +2089,7 @@ struct GANGMINLEX {// receive a band send back i416 and morphing data
 						return 1;
 					}
 					else if (y == s.v7) {//137  268 459  35
+						cout << "137 in stack 3" << endl;
 						if (!(vj2 & s.v6))return -1;
 						if (!(vj2 & s.v89))return -1;
 						s.v8 = vj2 & s.v89;	s.v9 = vj3 & s.v89;
@@ -2045,10 +2098,11 @@ struct GANGMINLEX {// receive a band send back i416 and morphing data
 						return 1;
 					}
 					else {// 138 259 467 or 269 457
-						if (!(vj3 & s.v4))return -1;
+						cout << "138 in stack 3" << endl;
+						if (!(vj3 & s.v4))return -1; 
 						if (!(vj3 & s.v7))return -1;
-						if (!(y == s.v89)) return -1;
-						if (!(vj2 == s.v89)) return -1;
+						if (!(y & s.v89)) return -1;
+						if (!(vj2 & s.v89)) return -1;
 						s.v8 = y & s.v89;	s.v9 = vj2 & s.v89;
 						Map_1_1_1(6, s.v7, s.v8, s.v9);
 						if (vj2 & s.v5)  igang = 36;
@@ -2061,10 +2115,6 @@ struct GANGMINLEX {// receive a band send back i416 and morphing data
 		return -1;// not implemented
 
 	}
-	int Go9perm(SA& s) {// must excnage stack1 stack2
-		return 0;
-	}
-
 
 	//====================================  39_43 no 
 	/*
@@ -2490,8 +2540,8 @@ struct GANGMINLEX {// receive a band send back i416 and morphing data
 
 void Go_c17_91() {// test band3 using gangster
 	cout << "process 91 band3 using template " << endl;
-	for (int ig = 19; ig < 44; ig++) {// 44 gangsters
-		if (ig != 20)continue;
+	for (int ig = 36; ig < 44; ig++) {// 44 gangsters
+		//if (ig != 20)continue;
 		//if (ig <  40)continue;
 		//if (ig > 41)continue;
 		const char* myg = t444g[ig];
