@@ -662,7 +662,7 @@ void Go_c17_90() {// read index extract first
 	//cout << " maxnsol" << maxnsol << endl;
 	//fout1 << startitems  << endl;
 }
-
+/*
 const char* t444g[44] = {
 "123456789123456789123456789","123456789123456789123457689",
 "123456789123456789124357689","123456789123456789124378569",
@@ -687,7 +687,8 @@ const char* t444g[44] = {
 "123456789124378569135279468","123456789124378569137245689",
 "123456789124378569157268349","123456789147258369159267348",
 };
-
+*/
+#include "gcat_tgang.h"    
 int tpermgang[6][3] = { {0,1,2},{0,2,1},
 	{1,0,2},{1,2,0},{2,0,1},{2,1,0} };
 int tpermg9stk[3][9] = {
@@ -2507,7 +2508,7 @@ void Go_c17_91() {// test band3 using gangster
 		//if (ig != 20)continue;
 		//if (ig <  40)continue;
 		//if (ig > 41)continue;
-		const char* myg = t444g[ig];
+		const char* myg = t44g[ig];
 		for (int i = 0; i < 27; i++) {
 			cout << myg[i]; if (i == 8 || i == 17) cout << "  ";
 		}
@@ -2562,13 +2563,14 @@ void Go_c17_92() {// test band3 using gangster
 	int gb3[9], gb3d[9][3], gdcols[9][3];
 	//int tpcols[4] = { 0111,0110,0101,011 };// column patterns
 	int max4 = 0, max5 = 0, max6 = 0, max7 = 0, max8 = 0, max9 = 0;
+	int ntot = 0;
 	B3PAT b3pats[9][2];
 	B3PATCUM b3c1[2], b3c2[4], b3c3[8], b3c4[16], b3c5[32], b3c6[32],
 		b3c7[32], b3c8[32], b3c9[32];
 	for (int ig = 0; ig < 44; ig++) {// 44 gangsters
 		//if (ig != 4)continue;
 		memset(gb3, 0, sizeof gb3);
-		const char* myg = t444g[ig];
+		const char* myg = t44g[ig];
 		cout << myg << " gangster studied" << endl;
 		for(int istk=0, k = 0,icol=0;istk<3;istk++)
 			for(int i=0;i<3;i++,icol++)
@@ -2690,12 +2692,19 @@ void Go_c17_92() {// test band3 using gangster
 						register int pj = b3c8[j].pat;
 						if (!(p & pj)) {
 							nvalid++;
+							ntot++;
 							B3PATCUM& myb3c = b3c9[nb3c9++];
 							myb3c.Cum(b3c8[j], b3pats[d9][i], 20, d9);
 							myb3c.SetIndex();
-							for (int i = 0; i < 27; i++)
-								fout1 << myb3c.b0[i] + 1;
-							fout1 << ";" << ig << ";" << nvalid << "," << myb3c.index << endl;
+							//fout1 << '"';
+							//for (int i = 0; i < 27; i++)
+								//fout1 << myb3c.b0[i] + 1;
+							//fout1 << '"' << ",";
+							//fout1 << myb3c.index << ',' ;
+							//if (!(ntot & 15)) fout1<<"//"<<ntot-1 << endl;
+
+							//fout1 << ";" << ig << ";" << nvalid << "," << myb3c.index << endl;
+							//fout1 << ";" << ig << ";" << nvalid << "," << myb3c.index << endl;
 						}
 					}
 				}
@@ -2711,8 +2720,9 @@ void Go_c17_92() {// test band3 using gangster
 			if (nb3c5 > max5) max5 = nb3c5;
 			if (nb3c4 > max4) max4 = nb3c4;
 		}
-
+		fout1 << ntot << ',';
 	}
+	fout1 << endl;
 	cout << " end max 4 5 6 =" << max4 << " " << max5 << " " << max6 << endl
 		<< " max  7 8 9=" << max7 << " " << max8 << " " << max9	<< endl;
 
