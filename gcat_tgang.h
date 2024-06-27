@@ -627,3 +627,26 @@ uint16_t tfillband[1892] = {
 1400,1448,1486,1532,1560,1590,1626,1652,1690,1710, // 30-39
 1726,1758,1844,1872,1892, //40-43+end
  };
+ int tfillbandmorphed[288][27];// max is 288 for gang0
+ int tfillbandid[288];
+ int tfillorder[288];
+
+ void SortBandsMorphed(int n) {
+	 for (int i = 0; i < n; i++) tfillorder[i] = i;
+	 for (int i = 0; i < n - 1; i++) {
+		 register int* bi = tfillbandmorphed[tfillorder[i]];
+		 for (int j = i + 1; j < n; j++) {
+			 register int* bj = tfillbandmorphed[tfillorder[j]];
+			 for (int k = 0; k < 27; k++) {
+				 if (bj[k] > bi[k])break;
+				 if (bj[k] < bi[k]) {
+					 int x = tfillorder[j];
+					 bi = tfillbandmorphed[x];
+					 tfillorder[j] = tfillorder[i];
+					 tfillorder[i] = x;
+					 break;
+				 }
+			 }
+		 }
+	 }
+ }

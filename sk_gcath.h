@@ -202,6 +202,9 @@ struct GEN_BANDES_12 {// encapsulating global data
 	void GoRow5();
 	void GoRow6();
 	void GoNewBand2();
+
+	void GoB2GangsterAnalysis();
+
 	void GoBand3();
 	void Gor8c2();
 	inline void Gor8c3();

@@ -295,6 +295,7 @@ void GEN_BANDES_12::GoNewBand2() {
 		tww.InitAndMorph(grid0, pband2, 1); // init and morph band 1 first
 		if (tww.BelowB1b2()) return;
 	}
+	GoB2GangsterAnalysis();
 	{ // column 1 must be sorted lexically minimal
 		register int v = b3colfree[0];
 		bitscanforward(grid0[54], v);
@@ -325,6 +326,95 @@ int GEN_BANDES_12::TWW::BelowCompB1b2() {
 	return 0;
 }
 
+void GEN_BANDES_12::GoB2GangsterAnalysis() {
+	p_cpt2g[9]++;
+	cout << " band2 gangster analysis " << p_cpt2g[9] << endl;
+	int locdiag = 0;
+	//if (p_cpt2g[9] > 100) locdiag = 1;
+	//if (p_cpt2g[9]==150) locdiag = 2;
+	//if (p_cpt2g[9] > 200) return;
+
+	char gg[28]; gg[27 ] = 0;
+	int ggi[27];
+	for (int i = 0,j=0; i < 9; i++) {
+		int x[3],y= b3colfree[i];
+		bitscanforward(x[0], y);
+		y ^= 1 << x[0];
+		bitscanforward(x[1], y);
+		bitscanreverse(x[2], y);
+		ggi[j] = x[0];	gg[j++] = x[0]+'1'; 
+		ggi[j] = x[1]; gg[j++] = x[1] + '1';
+		ggi[j] = x[2]; gg[j++] = x[2] + '1';
+	}
+	if (locdiag == 2) {
+
+		cout << gg << "  gg" <<endl;
+		gangminlex.Init(ggi,1);
+		return;
+	}
+	gangminlex.Init(ggi);
+	int ig = gangminlex.igang, istart = tfill_index[ig], iend = tfill_index[ig + 1];
+	if (locdiag) {
+		cout << gg << " gangster to see igang=" << ig << " start" << istart << " end=" << iend
+			<< " for band1 " << it16 << endl;
+		gangminlex.DumpMapping();
+		BandDump(grid0, " band1");
+		BandDump(&grid0[27], " band2");
+
+	}
+	//	if (it16_2 < it16) return;// lower band1 
+	int nokindex = 0;
+	for (int i = istart; i < iend; i++) {
+		int bd=tfillband[i];
+		if (bd < it16) continue;
+		const char* cx = t44fills[i];
+		//cout << cx << " " << bd<< "\t\t to morph" << endl;
+		int b3morphed[27];
+		for (int i = 0; i < 27; i++) {
+			int ncell = gangminlex.cellmap[i],
+				ndigit = gangminlex.digitmap[cx[i] - '1'];
+			//cout <<i<<" " << ncell << " " << ndigit << endl;
+			b3morphed[ncell] = ndigit;
+		}
+		//BandDump(b3morphed, "before reorder");
+		BandReOrder(b3morphed);
+		//BandDump(b3morphed, "after reorder");
+		tfillbandid[nokindex] = bd;
+		memcpy(tfillbandmorphed[nokindex++], b3morphed, 4 * 27);
+	}
+	if (!nokindex)return;
+	if (nokindex > 1)SortBandsMorphed(nokindex);
+	else tfillorder[0] = 0;
+	if(locdiag)cout << "print ordered fills morphed for band 3" << endl;
+	for (int i = 0; i < nokindex; i++) {
+		int* myb = tfillbandmorphed[tfillorder[i]];
+		for (int i = 0; i < 27; i++) cout << myb[i] + 1;
+		if(locdiag)cout << " " << i << " order"<< tfillorder[i] << endl;
+		for (int i = 0; i < 27; i++) grid0[54+i] = myb[i];
+		it16_3 = tfillbandid[tfillorder[i]];
+		// check stacks
+		{
+			int gd[81];
+			for (int i = 0; i < 81; i++)gd[i] = grid0[C_transpose_d[i]];
+			BANDMINLEX::PERM perm_ret;
+			bandminlex.Getmin(gd, &perm_ret);
+			idt16[0] = perm_ret.i416;
+			if (idt16[0] < it16) continue; //no minimal here
+			bandminlex.Getmin(&gd[27], &perm_ret);
+			idt16[1] = perm_ret.i416;
+			if (idt16[1] < it16) continue; //no minimal here
+			bandminlex.Getmin(&gd[54], &perm_ret);
+			idt16[2] = perm_ret.i416;
+			if (idt16[2] < it16) continue; //no minimal here
+		}
+		BandDump(myb, "call checksol");
+		// if same index need perm band 3
+		if(it16==it16_3 || it16_2==it16_3)
+			bandminlex.Getmin(&grid0[54], &pband3);
+		GoCheckSol();
+	}
+	cout << "end gangster analysis" << endl;
+}
 
 
 void GEN_BANDES_12::GoBand3() {
@@ -550,6 +640,14 @@ inline void GEN_BANDES_12::Gor8c7() {
 
 inline void GEN_BANDES_12::GoCheckSol() {
 	if (go_back)return;
+	int locdiag = 0;
+	if (1) {
+		GridDump(grid0, "entry checksol");
+		cout << "n_auto_b1=" << n_auto_b1 << "n_auto_b1b2=" << n_auto_b1b2
+			<< "n_auto_b2b1=" << n_auto_b2b1 << " it16=" << it16
+			<< " it16_2=" << it16_2 << " it16_3=" << it16_3 << endl;
+		locdiag = 1;
+	}
 	if (n_auto_b1) {
 		for (int imorph = 0; imorph < n_auto_b1; imorph++) {
 			BANDMINLEX::PERM& p = t_auto_b1[imorph];
@@ -573,44 +671,7 @@ inline void GEN_BANDES_12::GoCheckSol() {
 			}
 		}
 	}
-
-	if (0 &&p_cpt2g[4] == 69) {
-		for (int i = 0; i < 81; i++)cout << grid0[i] + 1;
-		cout << " one sol to check "
-			<< it16 << " " << it16_2 << " " << it16_3
-			<< " " << idt16[0] << " " << idt16[1] << " " << idt16[2] << endl;
-		if (0 && p_cpt[4] >= 15) {
-			for (int imorph = 0; imorph < n_auto_b1; imorph++) {
-				cout << "check morph" << imorph << endl;
-				BANDMINLEX::PERM& p = t_auto_b1[imorph];
-				int band[27];
-				BandReShape(&grid0[27], band, p);
-				for (int i = 0; i < 27; i++)cout << band[i] + 1;
-				cout << endl;
-				//cout << "equal b3 morph b2 see reverse" << endl;
-				// if band2 morph < band3 this is not a min lex
-				BandReShape(&grid0[54], band, p);
-				for (int i = 0; i < 27; i++)cout << band[i] + 1;
-				cout << endl;
-			}
-			/*
-*/
-			int zd[81];
-			BANDMINLEX::PERM perm_ret;
-			for (int i = 0; i < 81; i++)	zd[i] = grid0[C_transpose_d[i]];
-			bandminlex.Getmin(zd, &perm_ret);
-			cout << " stack1 " << perm_ret.i416 << endl;
-			bandminlex.Getmin(&zd[27], &perm_ret);
-			cout << " stack2 " << perm_ret.i416 << endl;;
-			bandminlex.Getmin(&zd[54], &perm_ret);
-			cout << " stack2 " << perm_ret.i416 << endl;
-
-		}
-
-
-	}
-
-
+	if (locdiag) cout << "a" << endl;
 	if (n_auto_b2b1) {
 		int b3w[27], band[27];//first morph to band 2 min lexical
 		BandReShape(&grid0[54], b3w, pband2);
@@ -621,6 +682,7 @@ inline void GEN_BANDES_12::GoCheckSol() {
 			if (ir < 0) return;
 		}
 	} 
+	if (locdiag) cout << "b" << endl;
 	if (n_auto_b1 && (it16_2 == it16_3)) { //check perm b2 b3
 		for (int imorph = 0; imorph < n_auto_b1; imorph++) {
 			int band[27];//first morph to band 2 min lexical
@@ -634,6 +696,7 @@ inline void GEN_BANDES_12::GoCheckSol() {
 			if (ir < 0) return;
 		}
 	}
+	if (locdiag) cout << "c" << endl;
 	if (it16 == it16_2) {//  try band 2 first
 		tww.InitAndMorph(grid0, pband2, 1); // init and morph band 2 first
 		if (tww.Below()) return;
