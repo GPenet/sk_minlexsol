@@ -1595,7 +1595,7 @@ struct GANGMINLEX {// receive a band send back i416 and morphing data
 			r= xs78.v456;
 			Map_1_1_1(3, vc6 & r, vc7 & r, vc8 & r);
 			r = xs78.v789;
-			Map_1_1_1(6, vc8 & r, vc7 & r, vc6 & r);
+			Map_1_1_1(6, vc8 & r, vc6 & r, vc7 & r);
 			return 1;
 		}
 
@@ -2401,166 +2401,59 @@ struct GANGMINLEX {// receive a band send back i416 and morphing data
 		Map_1_1_1(6, s.v7, s.v8, s.v9);
 		return 1;
 	}
-	void Go9_43() {
+	void Go9_43() {//123 456 789 147 258 369 159 267 348	
 		InitNoMap();
-		igang = 43;// last gang no match
-		//find a valid  start
-		int v123 = tcols[0], v456 = tcols[1], v789 = tcols[2],
-			v1, v2, v3,v1n,v3n;
-		bitscanforward(v1n, v123); v1 = 1 << v1n;
-		bitscanreverse(v3n, v123); v3 = 1 << v3n;
-		v2 = v123 & ~(v1 | v3);
-		int v147, v258, v369,c3,c4,c5;
-		for (int i = 3; i < 6; i++) {
-			int v = tcols[i];
-			if (v & v1) {v147 = v; c3 = i;	}
-			else if (v & v2){ v258 = v; c4 = i;	}
-			else {v369 = v; c5 = i;	}
-		}
-		int v189, v267, v346,c6,c7,c8;
-		for (int i = 6; i < 9; i++) {
-			int v = tcols[i];
-			if (v & v1) { v189 = v; c6 = i;	}
-			else if (v & v2) {v267 = v; c7 = i;	}
-			else{ v346 = v; c8 = i;	}
-		}
-		MapC1(0,tcols_cols[0]); MapC1(1, tcols_cols[1]);
-		MapC1(2, tcols_cols[2]); MapC1(3, tcols_cols[c3]);
-		MapC1(4, tcols_cols[c4]); MapC1(5, tcols_cols[c5]);
-		MapC1(6, tcols_cols[c6]); MapC1(7, tcols_cols[c7]);
-		MapC1(8, tcols_cols[c8]);
-		Map_1_1_1(0, v1, v2, v3);
-		int v4 = v147 & v456, v5 = v258 & v456, v6 = v369 & v456;
-		Map_1_1_1(3, v4, v5, v6);
-		int v7 = v147 & v789, v8 = v258 & v789, v9 = v369 & v789;
-		Map_1_1_1(6, v7, v8, v9);
-//		if (!BuildCellMap()) return;
-		BuildCellMap();
-
-		/*
-			int vx[3],isok,istk,stk,seq[3],seq2[3];
-		for (istk=0,stk=1; istk < 3; istk++,stk<<=1){
-			for (int j = 3*istk,i=0; i < 3; i++,j++)  vx[i] = tcols[j];	
-			isok = 1;
-			for (int i = 0,k=1; i < 9; i++) {
-				int  v = tcols[i],s= tcols_stk[i],van,vcn;
-				if (s == stk)continue;
-				bitscanforward(van, v);
-				bitscanreverse(vcn, v);
-				int va=1<<van,vc=1<<vcn,vb=v&~(va|vc);
-				if (k) {// first, get the sequence
-					k = 0;
-					if (vx[0] & va) seq[0] = 1;
-					else if (vx[1] & va) seq[0] = 2;
-					else seq[0] = 3;
-					if (vx[0] & vb) seq[1] = 1;
-					else if (vx[1] & vb) seq[1] = 2;
-					else seq[1] = 3;
-					seq[2] = 6 - seq[1] - seq[0];
-					if(debug)
-					cout << "sequence= " << seq[0] << seq[1] << seq[2] << endl;
-				}
-				else {// must be the same sequence
-					if (vx[0] & va) seq2[0] = 1;
-					else if (vx[1] & va) seq2[0] = 2;
-					else seq2[0] = 3;
-					if (vx[0] & vb) seq2[1] = 1;
-					else if (vx[1] & vb) seq2[1] = 2;
-					else seq2[1] = 3;
-					seq2[2] = 6 - seq2[1] - seq2[0];
-					if(debug)
-					  cout << "sequence2= " << seq2[0] << seq2[1] << seq2[2] << endl;
-					if ((seq[0] != seq2[0]) || (seq[1] != seq2[1])) {
-						isok = 0; break;
-					}
-				}
-			}
-			if (isok == 1) 	{
-				if(debug)
-				  cout << "ok for istk=" << istk  
-				 	<< " sequence= " << seq[0] << seq[1] << seq[2] << endl;
-				break;
-			}
-		}	*/
-
-		/*		bug ig not valid p_cpt2g[9]423
-		357 189 246
-		568 349 127
-		145 679 238 gangster  studied ntcols = 9
-		..1.1.1.. count 1 cols 1........  stk=1 isort=0
-		1......11 count 1 cols .1.......  stk=1 isort=1
-		.1.1.1... count 1 cols ..1......  stk=1 isort=2
-		....11.1. count 1 cols ...1.....  stk=2 isort=3
-		..11....1 count 1 cols ....1....  stk=2 isort=4
-		11....1.. count 1 cols .....1...  stk=2 isort=5
-		1..11.... count 1 cols ......1..  stk=4 isort=6
-		.....11.1 count 1 cols .......1.  stk=4 isort=7
-		.11....1. count 1 cols ........1  stk=4 isort=8
-		sequence= 132 sequence2= 132 sequence2= 231
-		sequence= 213 sequence2= 312
-		sequence= 312 sequence2= 132
-		123 456 789
-		147 258 369
-		159 267 348
-		*/
-
-
-		/*
-		if (istk > 2) {
-			cout << "bug 43 istk=" << istk << " no match found" << endl;
-			BuildCellMap(); return;
-		}
-
-
-		// choose digits 123 in the first triplet, then map all
-		int v123 = vx[0], v456 = vx[1], v789 = vx[2],
-			v1, v2, v3, v4, v5, v6, v7, v8, v9;
-		int id1 = 3 * istk, * td12 = tpermgang[2 * istk],
-			id2 = 3 * td12[1], id3 = 3 * td12[2];
-		// map columns 012 from base stack
-		{
-			int id = 3 * istk, * cols = &tcols_cols[id];
-			MapC1(0, cols[0]);	MapC1(1, cols[1]);	MapC1(2, cols[2]);
-			MapC1(3, tcols_cols[id2]);
-		}
-		// start with the first in stack2 147
-		{
-			int vx = tcols[id2],vy,cx,cy;
-			v1 = vx & v123; v4 = vx & v456; v7 = vx & v789;
-			for (int i = 0, j = id3; i < 3; i++, j++) {
-				int vy= tcols[j];// look for 159
-				if (!(vy & v1)) continue;
-				v5 = vy & v456; v9 = vy & v789;
-				MapC1(6, tcols_cols[j]);
-				break;
-			}
-			id2++;// now look for 258 369 in stack "2"
-			vx= tcols[id2];
-			if (vx & v5) {
-				cx= tcols_cols[id2++];
-				vy= tcols[id2]; cy = tcols_cols[id2++];
-			}
-			else {
-				vy = vx; cy = tcols_cols[id2++];
-				vx = tcols[id2]; cx = tcols_cols[id2++];
-			}
-			v2 = vx & v123; v3 = vy & v123; v6 = vy & v456;
-			v8 = v8 & v789; v9 = vy & v789;
+		igang = 43;
+		int v123 = tcols[0], vx = 0x1ff & ~v123, v1, v2, v3;
+		{// start using first
+			int v1n, v3n;
+			bitscanforward(v1n, v123); v1 = 1 << v1n;
+			bitscanreverse(v3n, v123); v3 = 1 << v3n;
+			v2 = v123 & ~(v1 | v3);
 			Map_1_1_1(0, v1, v2, v3);
+			MapC1(0, tcols_cols[0]);
+			MapC1(1, tcols_cols[1]);
+			MapC1(2, tcols_cols[2]);
+		}
+		int v14759 = 0, v25867 = 0, v36948 = 0;
+		for (int i = 3; i < 9; i++) {
+			int v = tcols[i];
+			if (v & v1)v14759 |= v;
+			else if (v & v2)v25867 |= v;
+			else v36948 |= v;
+		}
+		int v68 = vx & ~v14759, v49 = vx & ~v25867,
+			v57 = vx & ~v36948;
+		int v4, v5, v6, v7, v8, v9;
+		{ // find v4 v5 v6 v7 v8 v9
+			register int V = tcols[1];
+			v4 = V & v49; v5 = V & v57; v6 = V & v68;
+			V = tcols[2];
+			v9= V & v49; v7 = V & v57;  v8 = V & v68;
 			Map_1_1_1(3, v4, v5, v6);
 			Map_1_1_1(6, v7, v8, v9);
-			MapC1(4, cx); MapC1(5, cy);
+		}
+		int v147 = v1 | v4 | v7, v258 = v2 | v5 | v8, v369 = v3 | v6 | v9;
+		int v159 = v1 | v5 | v9, v267 = v2 | v6 | v7, v348 = v3 | v4 | v8;
+		if (debug) {
+			cout << Char9out(v147) << " v147" << endl;
+			cout << Char9out(v258) << " v258" << endl;
+			cout << Char9out(v369) << " v369" << endl;
+			cout << Char9out(v159) << " v159" << endl;
+			cout << Char9out(v267) << " v267" << endl;
+			cout << Char9out(v348) << " v348" << endl;
 		}
 
-	// end mapping columns using second stack
-		for (int i = 0, j = id3; i < 3; i++, j++) {
-			int v= tcols[j],c = tcols_cols[j];// look for 159
-			if (v & v2)MapC1(7, c); else if (v & v3)MapC1(8, c);
+		for (int i =3; i < 9; i++) {
+			int v = tcols[i],c= tcols_cols[i];
+			if (v == v147) MapC1(3,c);
+			else if (v == v258) MapC1(4, c);
+			else if (v == v369) MapC1(5, c);
+			else if (v == v159) MapC1(6, c);
+			else if (v == v267) MapC1(7, c);
+			else  MapC1(8, c);
 		}
-		*/
-		//DumpMapping();
-		//Check();
-
+		BuildCellMap();
 	}
 }gangminlex;
 

@@ -348,11 +348,13 @@ void GEN_BANDES_12::GoB2GangsterAnalysis() {
 	p_cpt2g[9]++;
 	//cout << " band2 gangster analysis " << p_cpt2g[9] << endl;
 	int locdiag = 0;
-	if (p_cpt2g[9] > 13092 && p_cpt2g[9] < 13095) locdiag = 1;
-	//if (p_cpt2g[9] > 10066 && p_cpt2g[9] < 10184) locdiag = 1;
-	if (p_cpt2g[9]==13094) locdiag = 2;
-	//if (p_cpt2g[9] == 10111) locdiag = 2;
-	//if (p_cpt2g[9] > 200) return;
+	//if (p_cpt2g[9] > 17880 && p_cpt2g[9] < 18258) locdiag = 1;
+	//if (p_cpt2g[9] > 26724 && p_cpt2g[9] < 27036) locdiag = 1;
+	//if (p_cpt2g[9]==18229) locdiag = 2;
+	//if (p_cpt2g[9] == 907) locdiag = 2;
+	//if (p_cpt2g[9] == 981) locdiag = 2;
+	//if (p_cpt2g[9] <17880) return;
+	//if (p_cpt2g[9] >  18258) return;
 
 	char gg[28]; gg[27 ] = 0;
 	int ggi[27];
