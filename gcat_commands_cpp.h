@@ -14,8 +14,6 @@ extern int GetRow4tIndex(int64_t v);
 extern uint16_t tr4u[652408];
 extern uint16_t tr4nsol[652408];
 //========================================
-const char * zh_g_cpt[10] = { "npuz", "guess", "close_d ", "upd1 ", "upd2 ",
-"fupd ", "hpair ", "htripl ", " ", " " };
 
 const char * libs_c17_00_cpt2g[100] = {
 	"0  ", 	"1  ", 	"2   ", 	"3   ",	
@@ -121,37 +119,6 @@ void GridDump(int* a,const  char* lib) {
 	for (int i = 0; i < 81; i++) cout << a[i] + 1;
 	cout << " " << lib << endl;
 }
-void Table54Dump(uint64_t* tin, uint32_t ntin) {
-	for (uint32_t i = 0; i < ntin; i++)
-		cout << Char54out(tin[i]) << " " << i 
-		<<" "<<_popcnt64(tin[i]) << endl;
-}
-struct CLBS {// clues band stack
-	uint16_t b[3];
-	uint16_t s[3];
-	inline void Init(uint64_t bf54, uint16_t n) {
-		register uint64_t U = bf54;
-		b[0] = (uint16_t)_popcnt64(U & BIT_SET_27);
-		b[1] = n - b[0];
-		b[2] = 0;
-		register uint64_t S = stack1_54;
-		s[0] = (uint16_t)_popcnt64(U & S);
-		S <<= 3;
-		s[1] = (uint16_t)_popcnt64(U & S);
-		s[2] = n - s[0] - s[1];
-	}
-	inline void Add(uint32_t cell) {
-		b[cell / 27]++;
-		s[C_stack[cell]]++;
-	}
-	
-	void Status() {
-		cout << " bx " << b[0] << b[1] << b[2]
-			<< " sx " << s[0] << s[1] << s[2];
-
-	}
-};
-
 void PermBands(char* z163, int* pi1, int* pi2, int i1, int i2) {
 	register int ix = *pi1; *pi1 = *pi2; *pi2 = ix;
 	char temp[27];
@@ -162,134 +129,6 @@ void PermBands(char* z163, int* pi1, int* pi2, int i1, int i2) {
 	memcpy(&z163[27 * i1 + 82], &z163[27 * i2 + 82], 27);
 	memcpy(&z163[27 * i2 + 82], temp, 27);
 }
-void BandReShapewithknown(int* s, char* d, char* sk, char* dk, BANDMINLEX::PERM p) {
-	int* pc = p.cols;
-	//uint8_t* pc = p.cols;
-	for (int irow = 0; irow < 3; irow++) {
-		int drow = 9 * irow;
-		for (int icol = 0; icol < 9; icol++) {
-			int x = p.map[s[drow + pc[icol]]];
-			char c = sk[drow + pc[icol]],
-				cx = (char)x + '1';
-			d[drow + icol] = cx;
-			if (c == '.')dk[drow + icol] = '.';
-			else dk[drow + icol] = cx;
-		}
-	}
-	char temp[9];// now reorder 
-	char tempk[9];
-	if (d[0] > d[9]) {
-		memcpy(temp, &d[0], 9);
-		memcpy(&d[0], &d[9], 9);
-		memcpy(&d[9], temp, 9);
-		memcpy(tempk, &dk[0], 9);
-		memcpy(&dk[0], &dk[9], 9);
-		memcpy(&dk[9], tempk, 9);
-	}
-	if (d[0] > d[18]) {
-		memcpy(temp, &d[0], 9);
-		memcpy(&d[0], &d[18], 9);
-		memcpy(&d[18], temp, 9);
-		memcpy(tempk, &dk[0], 9);
-		memcpy(&dk[0], &dk[18], 9);
-		memcpy(&dk[18], tempk, 9);
-	}
-	if (d[9] > d[18]) {
-		memcpy(temp, &d[9], 9);
-		memcpy(&d[9], &d[18], 9);
-		memcpy(&d[18], temp, 9);
-		memcpy(tempk, &dk[9], 9);
-		memcpy(&dk[9], &dk[18], 9);
-		memcpy(&dk[18], tempk, 9);
-	}
-}
-
-struct T12A {
-	char* ze, * zke;
-	char zs[164], *zks;
-	char zsr[164], * zksr;
-	int zs0[82], ib1, ib2, ib3, ib1a, ib2a, ib3a,na;
-	int  band2min[27], band2minr[27], tmini[108],nmini,
-		band3min[27], tmini3[108], nmini3;
-	BANDMINLEX::PERM* t_autom;
-
-	void MorphToPerm(char* z, BANDMINLEX::PERM& p) {
-		int z0[81];
-		char s[164], * ks=&s[82],*ke=&z[82];	
-		s[81] = ';'; ks[81] = 0;
-		for (int i = 0; i < 81; i++) z0[i] = z[i] - '1';
-		BandReShapewithknown(z0, s, ke, ks, p);
-		BandReShapewithknown(&zs0[27], &s[27], &ke[27], &ks[27], p);
-		BandReShapewithknown(&zs0[54], &s[54], &ke[54], &ks[54], p);
-		memcpy(z, s, 164);
-
-	}
-
-
-	void Init(char* e) {
-		ze = e;		
-		zke = &ze[82]; zks = &zs[82];
-		zs[81] = ';'; zks[81] = 0;
-		BANDMINLEX::PERM perm_ret;
-		bandminlex.Getmin(zs0, &perm_ret);
-		ib1 = perm_ret.i416;  
-		bandminlex.Getmin(&zs0[27], &perm_ret);
-		ib2 = perm_ret.i416; 
-		bandminlex.Getmin(&zs0[54], &perm_ret);
-		ib3 = perm_ret.i416;  
-		RigthOrder();
-	}
-	void RigthOrder() {
-		if (ib2a < ib1a)PermBands(ze, &ib1a, &ib2a, 0, 1);
-		if (ib3a < ib1a)PermBands(ze, &ib1a, &ib3a, 0, 2);
-		if (ib3a < ib2a)PermBands(ze, &ib2a, &ib3a, 1, 2);
-	}
-	void Init13(char* e)
-	{
-		ze = e;
-		zke = &ze[82]; zks = &zs[82];
-		zs[81] = ';'; zks[81] = 0;
-		BANDMINLEX::PERM perm_ret;
-		bandminlex.Getmin(zs0, &perm_ret);
-		ib1 = perm_ret.i416;  
-		bandminlex.Getmin(&zs0[27], &perm_ret);
-		ib2 = perm_ret.i416;  
-		bandminlex.Getmin(&zs0[54], &perm_ret);
-		ib3 = perm_ret.i416;  
-	}
-
-};
-struct T12 {
-	T12A zw, zwd;
-	char zed[164]; 
-	int mode;
-	void Init(char* ze) {
-		zed[81] = ';';
-		zed[163] = 0;
-		for (int i = 0; i < 81; i++) {
-			register int id = C_transpose_d[i];
-			zed[i] = ze[id];
-			zed[82 + i] = ze[id + 82];
-			zw.zs0[i] = ze[i] - '1';
-			zwd.zs0[i] = ze[id] - '1';
-		}
-		zw.Init(ze); zwd.Init(zed);
-	}
-	void SetMode() {
-		mode =0;
-		if (zwd.ib1a > zw.ib1a) return;
-		if (zwd.ib1a < zw.ib1a) { mode = 1; return; }
-		if (zwd.ib2a > zw.ib2a) return;
-		if (zwd.ib2a < zw.ib2a) { mode = 1; return; }
-		if (zwd.ib3a < zw.ib3a) { mode = 1; }
-
-	}
-	void Init13(char* ze) {
-		for (int i = 0; i < 81; i++) 			zw.zs0[i] = ze[i] - '1';
-		zw.Init13(ze); 
-	}
-
-};
 void Go_c17_10() {// test every..
 	//for (int i = 0; i < 417; i++) cout << b1startcat[i] << " " << i << endl;
 	//return;
@@ -411,7 +250,7 @@ void Go_c17_31() {// print part of the cat for given rows 4
 			if (j < sgo.vx[0]) { rank += jr4nsol; continue; }
 			genb12.InitRow4FromI10375(jr4index);
 			genb12.s_rank = rank;
-			if (1) {
+			if (op.ton) {
 				for (int k = 0; k < 36; k++) cout << genb12.grid0[k] + 1;
 				cout << ";" << i << ";" << j << ";" << rank << ";" << jr4nsol					
 					<< "\t p_cpt2g[9]=" << p_cpt2g[9] << endl;
@@ -420,7 +259,8 @@ void Go_c17_31() {// print part of the cat for given rows 4
 			rank += jr4nsol;
 		}
 		if(p_cpt[14])
-			cout << "seen for band " << i << " " << p_cpt[14] << endl;
+			cout << "seen for band " << i << " " << p_cpt[14] 
+			<< " expected "<< b1startcat[i+1]- b1startcat[i] << endl;
 		p_cpt2g[50] += p_cpt[14];
 		if (ir4b == sgo.vx[1])break;
 	}
@@ -452,7 +292,6 @@ void Go_c17_80() {// enumeration test
 		genb12.NewBand1(i416);
 	}
 }
-
 void Go_c17_81() {// enumeration test using row4
 	//return; // revise command line
 	cout << "Go_c17_81 phase 2a enumeration test using r4" << endl;
@@ -1449,7 +1288,7 @@ struct GANGMINLEX {// receive a band send back i416 and morphing data
 		else{// this is gang5 123 458 679
 			igang = 5;
 			Map_2_1(3, xs78.v45, xs78.v6);
-			Map_1_2(6,  xs78.v7, xs78.v89);
+			Map_1_1_1(6, xs78.v7, v8, v9);
 		}
 		return 1;
 
@@ -2460,9 +2299,6 @@ struct GANGMINLEX {// receive a band send back i416 and morphing data
 void Go_c17_91() {// test band3 using gangster
 	cout << "process 91 band3 using template " << endl;
 	for (int ig = 0; ig < 44; ig++) {// 44 gangsters
-		//if (ig >6 && ig != 18)continue;
-		//if (ig ==12)continue;
-		//if (ig > 41)continue;
 		const char* myg = t44g[ig];
 		for (int i = 0; i < 27; i++) {
 			cout << myg[i]; if (i == 8 || i == 17) cout << "  ";
@@ -2683,3 +2519,53 @@ void Go_c17_92() {// test band3 using gangster
 
 }
 
+void Go_c17_93() {// analysis of the 30 first bands
+	int* a = genb12.grid0, * b = genb12.colband1;
+	int g[27];
+	for (uint32_t i = 0; i <= 415; i++) {
+		genb12.InitBand1(i);
+		BANDMINLEX::PERM  p= automorphsp[100];
+		for (int ir = 0; ir < 3; ir++) {
+			int ior = p.rows[ir] * 9,idr=9*ir;
+			for (int ic = 0; ic < 9; ic++) {
+				int ocell = ior + p.cols[ic], dcell = idr + ic;
+				g[dcell] = p.map[a[ocell]];
+			}
+		}
+		cout << "bande " << i << endl;
+		BandDump(a, "source");
+		BandDump(g, "morph");
+		for(int j=0;j<100000;j++)
+			bandminlex.Getmin(a, &p);
+		cout << "id seen" << p.i416 << endl;
+	}
+
+	return;
+
+
+	for (uint32_t i = 0; i <= 30; i++) {
+		genb12.InitBand1(i);
+		for (int i = 0; i < 27; i++) cout << a[i] + 1;
+		cout << " band index" << i << endl;
+		for (int i = 0; i < 9; i++)
+			cout << Char9out(b[i]) << "col " << i << endl;
+		int n = 1, cx[9], ncx[9];
+		memset(ncx, 0, sizeof ncx);
+		cx[0] = b[0], ncx[0] = 1;
+		for (int i = 1; i < 9; i++) {
+			int v = b[i];
+			for (int j = 0; j < n; j++) {
+				if (v == cx[j]) {
+					ncx[j]++; v = 0; break;
+				}
+			}
+			if (v) { ncx[n] = 1; cx[n++] = v; }
+		}
+		cout << "n columns"	<< n << endl;		
+		if(n<9)for (int i = 0; i < n; i++) {
+			cout << Char9out(cx[i]) << " ncx= " <<ncx[i] << endl;
+		}
+	}
+
+
+}

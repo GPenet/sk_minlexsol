@@ -67,6 +67,7 @@ void Go_0() {
 	case 90: Go_c17_90(); break; // enumeration
 	case 91: Go_c17_91(); break; // band 3 templates on gangster
 	case 92: Go_c17_92(); break; // band 3 templates on gangster
+	case 93: Go_c17_93(); break; // band 1 30 premiers
 
 	}
 	cerr << "go_0 return" << endl;

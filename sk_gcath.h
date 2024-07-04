@@ -36,7 +36,7 @@ void BandReShape(int* s, int* d, BANDMINLEX::PERM p);
 void BandReOrder(int* d);
 struct GEN_BANDES_12 {// encapsulating global data 
 	int modeb12, go_back, diagmore, diagbug, 
-		it16, it16_2, it16_3;
+		it16, it16_2, it16_3,isbandbelow31;
 	int idt16[3];// diagonal
 	int irtw2,iret_diag;
 	char zsol[82], rband2[28];
@@ -50,9 +50,8 @@ struct GEN_BANDES_12 {// encapsulating global data
 		pband2, pband3;
 	int n_auto_b1, n_auto_p1, n_auto_b1b2, n_auto_b2b1,
 		n_auto_b1r4, n_auto_b1r4r5;
-	int b4dmr[3], b5dmr[3], b6dmr[3], r7dmr[2], r8dmr[2], r9dmr[2],
-		b4b5dmr[3], b7b8dmr[3];
-	int b5dkmr[3], r6mfree[3], b3colfree[9],b9free[3],r8free[9];
+	int b4dmr[3], b5dmr[3], b6dmr[3], b4b5dmr[3];
+	int b5dkmr[3], r6mfree[3], b3colfree[9];
 	//_________________ gangster 
 	int gangcols[9];// 9 bits fields band3 for each colum (see valid band2)
 	int gangb12[9]; // digit bf bands 12 per column
@@ -204,14 +203,6 @@ struct GEN_BANDES_12 {// encapsulating global data
 	void GoNewBand2();
 
 	void GoB2GangsterAnalysis();
-
-	void GoBand3();
-	void Gor8c2();
-	inline void Gor8c3();
-	inline void Gor8c4();
-	inline void Gor8c5();
-	inline void Gor8c6();
-	inline void Gor8c7();
 	inline void GoCheckSol();
 	inline void GoCheckDiagonal();
 

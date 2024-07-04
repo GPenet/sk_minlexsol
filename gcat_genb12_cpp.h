@@ -53,7 +53,6 @@ void  GEN_BANDES_12::InitRow4FromI10375(int i10375) {
 	b5dmr[0] = gbit[30] | gbit[31] | gbit[32];
 	p_cpt2g[4]++;		p_cpt[4] = 0;
 }
-
 void GEN_BANDES_12::GoRow4() {
 	grid0[27] = 1; gbit[27] = 2;// digit2 in r4c1
 	gfree[28] = 0x1ff ^ (2 | colband1[1]);
@@ -111,31 +110,9 @@ r4c9:gfree[35] = 0x1ff ^ (b4b5dmr[0] | gbit[33] | gbit[34] | colband1[8]);
 	//return;
 	goto r4c8l;
 }
-
 void GEN_BANDES_12::GoRow4From(int itr4) {
 	int ir4 = tr4u[itr4];
 	InitRow4FromI10375(ir4);
-	/*
-	{ // build the row 4 out of the tables
-		grid0[27] = 1;
-		register int64_t r4 = row4t[ir4] - 200000000,
-			w = r4 / 10000000;
-		grid0[28] = (int)w - 1; r4 -= w * 10000000;
-		w = r4 / 1000000; grid0[29] = (int)w - 1; r4 -= w * 1000000;
-		w = r4 / 100000; grid0[30] = (int)w - 1; r4 -= w * 100000;
-		w = r4 / 10000; grid0[31] = (int)w - 1; r4 -= w * 10000;
-		w = r4 / 1000; grid0[32] = (int)w - 1; r4 -= w * 1000;
-		w = r4 / 100; grid0[33] = (int)w - 1; r4 -= w * 100;
-		w = r4 / 10; grid0[34] = (int)w - 1; r4 -= w * 10;
-		grid0[35] = (int)r4 - 1;
-		for (int i = 27; i < 36; i++) {
-			gbit[i] = 1 << grid0[i];
-		}
-	}
-	b4dmr[0] = gbit[27] | gbit[28] | gbit[29];
-	b5dmr[0] = gbit[30] | gbit[31] | gbit[32];
-	p_cpt2g[4]++;		p_cpt[4] = 0;
-	*/
 	GoRow5();
 	fout1 << it16 << ";";
 	for (int i = 27; i < 36; i++) fout1 << grid0[i] + 1;
@@ -161,14 +138,28 @@ r5c3l: {CELLGO(38, r5c4, r5c2l)}
 //______________________________________________________ box5
 r5c4: b4dmr[1] = gbit[36] | gbit[37] | gbit[38];
 	b5dkmr[1] = b4dmr[1] | b5dmr[0];
-	gfree[39] = 0x1ff ^ (b5dkmr[1] | colband1[3]);
+	// early back with repeated mini row and band 1 over 30
+	isbandbelow31 = 0;
+	int b5free = 0x1ff;
+	if (b4dmr[1] == b5dmr[0]) {
+		if(it16>30) goto r5c3l;
+		isbandbelow31 = 1;
+		b5free = b6dmr[0];
+	}
+	else if (b4dmr[1] == b6dmr[0]) {
+		if (it16 > 30) goto r5c3l;
+		isbandbelow31 = 1;
+		b5free = b4dmr[0];
+	}
+	gfree[39] = b5free &~ (b5dkmr[1] | colband1[3]);
 r5c4l: {CELLGO(39, r5c5, r5c3l)}
 
-r5c5:gfree[40] = 0x1ff ^ (b5dkmr[1] | gbit[39] | colband1[4]);
+r5c5:gfree[40] = b5free & ~(b5dkmr[1] | gbit[39] | colband1[4]);
+
 r5c5l: {CELLGO(40, r5c6, r5c4l)}
 
 r5c6:b5dmr[1] = gbit[39] | gbit[40];
-	gfree[41] = 0x1ff ^ (b5dkmr[1] | b5dmr[1] | colband1[5]);
+	gfree[41] = b5free & ~(b5dkmr[1] | b5dmr[1] | colband1[5]);
 r5c6l: {CELLGO(41, r5c7, r5c5l)}
 //______________________________________________________ box6
 r5c7:b5dmr[1] = gbit[39] | gbit[40] | gbit[41];
@@ -295,19 +286,7 @@ void GEN_BANDES_12::GoNewBand2() {
 		tww.InitAndMorph(grid0, pband2, 1); // init and morph band 1 first
 		if (tww.BelowB1b2()) return;
 	}
-	if (sgo.vx[6]) {
-		GoB2GangsterAnalysis();
-		return;
-	}
-	{ // column 1 must be sorted lexically minimal
-		register int v = b3colfree[0];
-		bitscanforward(grid0[54], v);
-		gbit[54] = 1 << grid0[54];  v ^= gbit[54];
-		bitscanforward(grid0[63], v);
-		bitscanreverse(grid0[72], v);
-		gbit[63] = 1 << grid0[63]; gbit[72] = 1 << grid0[72];
-	}
-	GoBand3();
+	GoB2GangsterAnalysis();
 }
 int GEN_BANDES_12::TWW::BelowB1b2() {
 	memcpy(zsa, &zs0[27], sizeof zsa);
@@ -329,32 +308,11 @@ int GEN_BANDES_12::TWW::BelowCompB1b2() {
 	return 0;
 }
 
-
-/* manquent sans écart sur le numéro
-123456789457289631869713245 
-245897163698132457731645892
-316974528574328916982561374;5472729842
-123456789457289631869713245 même ban
-245897316398162574716345928
-534621897671938452982574163;5472729843
-123456789457289631869713245 245968173398127456671534928584671392736892514912345867;5472729844
-
-123456789457289631869713245245897316398162574716345928534621897671938452982574163;5472729843
-123456789457289631869713254245137968786945312931862547312574896578691423694328175;5472729961
-123456789457289631869713254245137968786945312931862547312574896594628173678391425;5472729962
-123456789457289631869731254278314965631592847945678123394867512516923478782145396;5472730111
-*/
 void GEN_BANDES_12::GoB2GangsterAnalysis() {
 	p_cpt2g[9]++;
 	//cout << " band2 gangster analysis " << p_cpt2g[9] << endl;
-	int locdiag = 0;
-	//if (p_cpt2g[9] > 17880 && p_cpt2g[9] < 18258) locdiag = 1;
-	//if (p_cpt2g[9] > 26724 && p_cpt2g[9] < 27036) locdiag = 1;
-	//if (p_cpt2g[9]==18229) locdiag = 2;
-	//if (p_cpt2g[9] == 907) locdiag = 2;
-	//if (p_cpt2g[9] == 981) locdiag = 2;
-	//if (p_cpt2g[9] <17880) return;
-	//if (p_cpt2g[9] >  18258) return;
+	int locdiag = sgo.vx[7];
+	if (p_cpt2g[9]== sgo.vx[8]) locdiag = 2;
 
 	char gg[28]; gg[27 ] = 0;
 	int ggi[27];
@@ -368,62 +326,30 @@ void GEN_BANDES_12::GoB2GangsterAnalysis() {
 		ggi[j] = x[1]; gg[j++] = x[1] + '1';
 		ggi[j] = x[2]; gg[j++] = x[2] + '1';
 	}
-	if (locdiag == 2) {
-
-		cout << gg << "  gg" <<endl;
-		gangminlex.Init(ggi,1);
-		gangminlex.DumpMapping();
-		gangminlex.Check();
-		//return;
-	}
 	gangminlex.Init(ggi);
 	int ig = gangminlex.igang;
-	if (ig < 0) {
-		cout << "bug ig not valid p_cpt2g[9]"<< p_cpt2g[9] << endl;
-		gangminlex.Init(ggi,1);
-		return;
-	}
 	int istart = tfill_index[ig], iend = tfill_index[ig + 1];
-	if (locdiag ) {
-		cout << gg << " gangster to see igang=" << ig << " start" << istart << " end=" << iend
-			<< " for band1 " << it16 << " p_cpt2g[9]=" <<p_cpt2g[9] << endl;
-		//gangminlex.DumpMapping();
-		//gangminlex.Check();
-		BandDump(grid0, " band1");
-		BandDump(&grid0[27], " band2");
-
-	}
 	//	if (it16_2 < it16) return;// lower band1 
 	int nokindex = 0;
 	for (int i = istart; i < iend; i++) {
 		int bd=tfillband[i];
 		if (bd < it16) continue;
 		const char* cx = t44fills[i];
-		//cout << cx << " " << bd<< "\t\t to morph" << endl;
 		int b3morphed[27];
 		for (int i = 0; i < 27; i++) {
 			int ncell = gangminlex.cellmap[i],
 				ndigit = gangminlex.digitmap[cx[i] - '1'];
-			//cout <<i<<" " << ncell << " " << ndigit << endl;
 			b3morphed[ncell] = ndigit;
 		}
-		//BandDump(b3morphed, "before reorder");
 		BandReOrder(b3morphed);
-		//BandDump(b3morphed, "after reorder");
 		tfillbandid[nokindex] = bd;
 		memcpy(tfillbandmorphed[nokindex++], b3morphed, 4 * 27);
 	}
 	if (!nokindex)return;
 	if (nokindex > 1)SortBandsMorphed(nokindex);
 	else tfillorder[0] = 0;
-	if(locdiag)cout << "print ordered fills morphed for band 3" << endl;
 	for (int i = 0; i < nokindex; i++) {
 		int* myb = tfillbandmorphed[tfillorder[i]];
-		if (locdiag) {
-			for (int i = 0; i < 27; i++) cout << myb[i] + 1;
-			cout << " " << i << " order" << tfillorder[i] << endl;
-		}
-
 		for (int i = 0; i < 27; i++) grid0[54+i] = myb[i];
 		it16_3 = tfillbandid[tfillorder[i]];
 		// check stacks
@@ -441,247 +367,15 @@ void GEN_BANDES_12::GoB2GangsterAnalysis() {
 			idt16[2] = perm_ret.i416;
 			if (idt16[2] < it16) continue; //no minimal here
 		}
-		//BandDump(myb, "call checksol");
-		// if same index need perm band 3
+		// if same index need perm band 3 in checksol
 		if(it16==it16_3 || it16_2==it16_3)
 			bandminlex.Getmin(&grid0[54], &pband3);
 		GoCheckSol();
 	}
-	//cout << "end gangster analysis" << endl;
-}
-
-
-void GEN_BANDES_12::GoBand3() {
-	p_cpt2g[6]++;
-	if (0 &&op.opcode == 11) {
-		char ws[82];
-		memset(ws, '.', 81); ws[81] = 0;
-		for (int i = 0; i < 55; i++)ws[i] = grid0[i] + '1';
-		ws[63] = grid0[63] + '1';
-		ws[72] = grid0[72] + '1';
-		cout << ws << " go to band 3" << endl;
-		cout << "gangster" << endl;
-		int wc[9],v; memcpy(wc, b3colfree, sizeof wc);
-		for (int i = 0; i < 3; i++) {
-			for (int j = 0; j < 9; j++) {
-				bitscanforward(v, wc[j]);
-				wc[j] ^= 1 << v;
-				cout << v + 1;
-			}
-			cout << endl;
-		}
-	}
-	//else return;
-	gfree[55] = b3colfree[1] & ~gbit[54];
-r7c2l: {CELLGO(55, r7c3, endr7)}
-endr7: return;
-
-r7c3:; gfree[56] = b3colfree[2] & ~(gbit[54]|gbit[55]);
-r7c3l: {CELLGO(56, r7c4, r7c2l)}
-
-
-//_________________________________________________ row 7 box8
-r7c4:r7dmr[0] = gbit[54] | gbit[55] | gbit[56];
-	gfree[57] = b3colfree[3] & ~(r7dmr[0]);
-r7c4l: {CELLGO(57, r7c5, r7c3l)}
-
-r7c5: gfree[58] = b3colfree[4] & ~(r7dmr[0] | gbit[57]);
-r7c5l: {CELLGO(58, r7c6, r7c4l)}
-
-r7c6: gfree[59] = b3colfree[5] & ~(r7dmr[0] | gbit[57] | gbit[58]);
-r7c6l: {CELLGO(59, r7c7, r7c5l)}
-
-// now only 0 or 1 possibility
-r7c7:	r7dmr[1] = gbit[57] | gbit[58] | gbit[59];
-	{
-		register int v = 0x1ff ^ (r7dmr[0] | r7dmr[1]);
-		gbit[60] = v & b3colfree[6]; 
-		gbit[61] = v & b3colfree[7];
-		gbit[62] = v & b3colfree[8];
-		if (!gbit[60] || !gbit[61] || !gbit[62]) goto  r7c6l;
-	}
-	bitscanforward(grid0[60], gbit[60]);
-	bitscanforward(grid0[61], gbit[61]);
-	bitscanforward(grid0[62], gbit[62]);
-	Gor8c2();
-	if (go_back)return;
-	goto r7c6l;
-}
-
-#define CELLGOR8A(M,N,G )bitscanforward(grid0[M], v);\
-bitscanreverse(grid0[N], v);\
-gbit[M] = 1 << grid0[M]; gbit[N] = 1 << grid0[N];G();
-
-#define CELLGOR8B(M,N,G )bitscanforward(grid0[N], v);\
-bitscanreverse(grid0[M], v);\
-gbit[M] = 1 << grid0[M]; gbit[N] = 1 << grid0[N];G();
-
-#define CELLGOR8(M,N,G )CELLGOR8A(M,N,G )CELLGOR8B(M,N,G )
-
-void GEN_BANDES_12::Gor8c2() {
-	if (n_auto_b1b2) {
-		for (int imorph = 0; imorph < n_auto_b1b2; imorph++) {
-			BANDMINLEX::PERM& p = t_auto_b1b2[imorph];
-			int ir = CompRow(p, &grid0[54], &grid0[54]);
-			if (ir < 0) return;			
-		}
-	}
-	if (0 &&p_cpt2g[4] == 125) {
-		for (int i = 54; i < 63; i++) cout << grid0[i] + 1;
-		cout << "new row 7 after b1b2 " << endl;
-	}
-	if (n_auto_b2b1) {
-		int rm[9]; MorphRow(pband2, &grid0[54], rm);
-		//for (int i = 0; i < 9; i++) cout << rm[i] + 1;
-		//cout << " morphed to pband2" << endl;
-
-		for (int imorph = 0; imorph < n_auto_b2b1; imorph++) {
-			BANDMINLEX::PERM& p = t_auto_b2b1[imorph];
-			//int rm2[9]; MorphRow(p, rm, rm2);
-			//for (int i = 0; i < 9; i++) cout << rm2[i] + 1;
-			//cout << " morphed rm2 i="<<imorph << endl;
-			int ir = CompRow(p,rm, &grid0[54]);
-			if (ir < 0) return;
-		}
-	}
-	if (0 &&p_cpt2g[4] == 125) {
-		cout << "new row 7 ok" << endl;
-	}
-	int v= b3colfree[1] ^ gbit[55];// checked always possible
-	CELLGOR8(64,73, Gor8c3)
-}
-inline void GEN_BANDES_12::Gor8c3() {
-	int v= b3colfree[2] ^ gbit[56];
-	CELLGOR8(65, 74, Gor8c4)
-}
-inline void GEN_BANDES_12::Gor8c4() {// also stack1
-	{
-		BANDMINLEX::PERM perm_ret;
-		int gd[27]; // check diagonal
-		for (int i = 0; i < 27; i++)gd[i] = grid0[C_transpose_d[i]];
-		bandminlex.Getmin(gd, &perm_ret);
-		idt16[0] = perm_ret.i416;
-		if (idt16[0] < it16) return; //no minimal here
-
-	}
-
-
-	r8dmr[0] = gbit[63]| gbit[64]| gbit[65];
-	r9dmr[0] = gbit[72] | gbit[73] | gbit[74];
-	int v = (b3colfree[3] ^ gbit[57]), d1, d2;
-	bitscanforward(d1, v); bitscanreverse(d2, v);
-	int bit1 = 1 << d1, bit2 = 1 << d2;
-	if ((!(bit1 & r8dmr[0]) && !(bit2 & r9dmr[0]))) {
-		grid0[66] = d1; grid0[75] = d2;
-		gbit[66] = bit1; gbit[75] = bit2;
-		Gor8c5();
-	}
-	if ((!(bit2 & r8dmr[0]) && !(bit1 & r9dmr[0]))) {
-		grid0[66] = d2; grid0[75] = d1;
-		gbit[66] = bit2; gbit[75] = bit1;
-		Gor8c5();
-	}
-
-}
-
-inline void GEN_BANDES_12::Gor8c5() {
-	//cout << "entry r8c5" << endl;
-	int v = b3colfree[4] ^ gbit[58], d1, d2;
-	bitscanforward(d1, v); bitscanreverse(d2, v);
-	int bit1 = 1 << d1, bit2 = 1 << d2;
-	if ((!(bit1 & r8dmr[0]) && !(bit2 & r9dmr[0]))) {
-		grid0[67] = d1; grid0[76] = d2;
-		gbit[67] = bit1; gbit[76] = bit2;
-		Gor8c6();
-	}
-	if ((!(bit2 & r8dmr[0]) && !(bit1 & r9dmr[0]))) {
-		grid0[67] = d2; grid0[76] = d1;
-		gbit[67] = bit2; gbit[76] = bit1;
-		Gor8c6();
-	}
-}
-inline void GEN_BANDES_12::Gor8c6() {
-	int v = b3colfree[5] ^ gbit[59], d1, d2;
-	bitscanforward(d1, v); bitscanreverse(d2, v);
-	int bit1 = 1 << d1, bit2 = 1 << d2;
-	if ((!(bit1 & r8dmr[0]) && !(bit2 & r9dmr[0]))) {
-		grid0[68] = d1; grid0[77] = d2;
-		gbit[68] = bit1; gbit[77] = bit2;
-		Gor8c7();
-	}
-	if ((!(bit2 & r8dmr[0]) && !(bit1 & r9dmr[0]))) {
-		grid0[68] = d2; grid0[77] = d1;
-		gbit[68] = bit2; gbit[77] = bit1;
-		Gor8c7();
-	}
-}
-
-
-inline void GEN_BANDES_12::Gor8c7() {
-	// see if box 9 can be filled 
-	r8dmr[1] = gbit[66] | gbit[67] | gbit[68];
-	r9dmr[1] = gbit[75] | gbit[76] | gbit[77];
-	{
-		register int v = 0x1ff ^ (r8dmr[0] | r8dmr[1]);
-		gbit[69] = v & b3colfree[6];
-		gbit[70] = v & b3colfree[7];
-		gbit[71] = v & b3colfree[8];
-		if (!gbit[69] || !gbit[70] || !gbit[71]) return;
-	}
-	{
-		register int v = 0x1ff ^ (r9dmr[0] | r9dmr[1]);
-		gbit[78] = v & b3colfree[6];
-		gbit[79] = v & b3colfree[7];
-		gbit[80] = v & b3colfree[8];
-		if (!gbit[78] || !gbit[79] || !gbit[80]) return;
-	}
-	{// get and check stack 2
-		BANDMINLEX::PERM perm_ret;
-		int gd[27]; // check diagonal
-		for (int i = 0, j = 27; i < 27; i++, j++)gd[i] = grid0[C_transpose_d[j]];
-		bandminlex.Getmin(gd, &perm_ret);
-		idt16[1] = perm_ret.i416;
-		if (idt16[1] < it16) return; //no minimal here
-	}
-	{
-		// assign 6 last cells
-		bitscanforward(grid0[69], gbit[69]);
-		bitscanforward(grid0[70], gbit[70]);
-		bitscanforward(grid0[71], gbit[71]);
-		bitscanforward(grid0[78], gbit[78]);
-		bitscanforward(grid0[79], gbit[79]);
-		bitscanforward(grid0[80], gbit[80]);
-
-	}
-
-	{// get and check band3 3
-		int ir = bandminlex.Getmin(&grid0[54], &pband3);
-		if (ir < 0) return; //would be bug  never seen
-		it16_3 = pband3.i416;
-		//		if (op.bx3 < 416 && (op.bx3 != it16_3)) goto next;
-		if (it16_3 < it16) return; //no minimal here
-	}
-	{// get and check stack 3
-		BANDMINLEX::PERM perm_ret;
-		int gd[27]; // check diagonal
-		for (int i = 0, j = 54; i < 27; i++, j++)gd[i] = grid0[C_transpose_d[j]];
-		bandminlex.Getmin(gd, &perm_ret);
-		idt16[2] = perm_ret.i416;
-		if (idt16[2] < it16) return; //no minimal here
-	}
-	GoCheckSol();
 }
 
 inline void GEN_BANDES_12::GoCheckSol() {
 	if (go_back)return;
-	int locdiag = 0;
-	if (0) {
-		GridDump(grid0, "entry checksol");
-		cout << "n_auto_b1=" << n_auto_b1 << "n_auto_b1b2=" << n_auto_b1b2
-			<< "n_auto_b2b1=" << n_auto_b2b1 << " it16=" << it16
-			<< " it16_2=" << it16_2 << " it16_3=" << it16_3 << endl;
-		locdiag = 1;
-	}
 	if (n_auto_b1) {
 		for (int imorph = 0; imorph < n_auto_b1; imorph++) {
 			BANDMINLEX::PERM& p = t_auto_b1[imorph];
