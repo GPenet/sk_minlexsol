@@ -254,17 +254,19 @@ r6c9:gfree[53] = r6mfree[2] & ~(colband1[8] | gbit[51] | gbit[52]);;
 }
 void GEN_BANDES_12::GoNewBand2() {
 	if (go_back)return;
-	// build now the gangster band 3
-	for (int i = 0, j = 27; i < 9; i++, j++)
-		b3colfree[i] = 0x1ff ^ (colband1[i] | gbit[j] | gbit[j + 9] | gbit[j + 18]);
-	for (int i = 0, j = 0; i < 3; i++, j += 3)
-		if ((b3colfree[j] | b3colfree[j+1] | b3colfree[j+2]) != 0x1ff) return;
 
 	// check if band2 stays minimal with auto morphs band1
 	int ir = bandminlex.Getmin(&grid0[27], &pband2, 0);
 	if (ir < 0) return; //would be bug  did not come in enumeration
 	it16_2 = pband2.i416;
 	if (it16_2 < it16) return;// lower band1 
+
+
+	// build now the gangster band 3
+	for (int i = 0, j = 27; i < 9; i++, j++)
+		b3colfree[i] = 0x1ff ^ (colband1[i] | gbit[j] | gbit[j + 9] | gbit[j + 18]);
+	for (int i = 0, j = 0; i < 3; i++, j += 3)
+		if ((b3colfree[j] | b3colfree[j+1] | b3colfree[j+2]) != 0x1ff) return;
 	if (op.b2 < 416 && it16_2 != op.b2) return;
 	if (0 &&op.opcode == 11) {
 		for (int i = 27; i < 54; i++)cout << grid0[i] + 1;

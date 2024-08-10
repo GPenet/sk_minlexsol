@@ -2292,6 +2292,7 @@ struct GANGMINLEX {// receive a band send back i416 and morphing data
 		BuildCellMap();
 	}
 }gangminlex;
+#include "gcat_Minlex_cpp.h"    
 
 void Go_c17_91() {// test band3 using gangster
 	cout << "process 91 band3 using template " << endl;
@@ -2516,832 +2517,53 @@ void Go_c17_92() {// test band3 using gangster
 
 }
 
-
-// index to the 416 band 1 after r2c4 r2c7 r2c8 r3c1 r3c2
-int bminlex_tindex[50] = { 
-	31, 65, 92, 110, 126, 135,		//00_ 123 
-	139, 166, 186, 196, 208, 214,	//06_ 126 
-	217, 234, 239,					//12_ 132 68 69 86(1)
-	240, 262, 277, 284, 298, 303,	//15_ 162 
-	309, 322, 332, 334, 343, 346,	//21_ 163  
-	347, 349, 354, 357,				//27_ 216 68 69 86 89
-	359,362, 366, 369, 375, 378,	//31_ 261
-	379, 381, 382, 386, 392, 395,	//37_ 263
-	397, 407,						//43_ 361 89 98
-	409, 411,						//45_ 362 89 98
-	412,415,416						//47_861_862 
-};
-
-struct BMINLEX {// receive a band send back i416 and morphing data
-	struct PERM {
-		int i416;
-		int rows[3], cols[9], map[9];
-		inline void InitBase(int i16 = 0) {
-			i416 = i16;
-			for (int i = 0; i < 9; i++)		cols[i] = map[i] = i;
-			for (int i = 0; i < 3; i++)		rows[i] = i;
-		}
-		void Dump() {
-			cout << "perm status i416=" << i416 << endl;
-			cout << "rows " << rows[0] << rows[1] << rows[2] << endl;
-			cout << "cols " << cols[0] << cols[1] << cols[2]
-				<< cols[3] << cols[4] << cols[5] << cols[6]
-				<< cols[7] << cols[8] << endl;
-			cout << "digs " << map[0] << map[1] << map[2]
-				<< map[3] << map[4] << map[5] << map[6]
-				<< map[7] << map[8] << endl;
-		}
-	}*pout;
-
-	int b0[27],b_bit[27], //0 based band int band0 [27] in the calling program
-		indexlim,  maxret,indexret,bindex, goback;
-	int minirows[9], minicols[9];
-	int cmap[9], dmap[9], r3mapped[9];
-	char r3c[10];
-
-	void Init(int* grid, int lim) {
-		goback = 0;// to stop at the first hit or over limit
-		r3c[9] = 0;// to have it in string mode
-		memcpy(b0, grid, sizeof b0);
-		indexlim = lim;
-		for (int i = 0; i < 27; i++) b_bit[i] = 1 << b0[i];
-		for (int ir = 0, i = 0; ir < 9; ir++, i += 3)
-			minirows[ir] = b_bit[i] | b_bit[i + 1] | b_bit[i + 2];
-		for (int ic = 0; ic < 9; ic++)
-			minicols[ic] = b_bit[ic] | b_bit[ic + 9] | b_bit[ic + 18];
-		{// setup the column gangster count
-			int n = 1, cx[9], ncx[9];
-			memset(ncx, 0, sizeof ncx);
-			cx[0] = minicols[0], ncx[0] = 1;
-			for (int i = 1; i < 9; i++) {
-				register int v = minicols[i];
-				for (int j = 0; j < n; j++) {
-					if (v == cx[j]) {
-						ncx[j]++; v = 0; break;
-					}
-				}
-				if (v) { ncx[n] = 1; cx[n++] = v; }
-			}
-			nx3 = 0; nx2 = 0; nxcols = n;
-			for (int i = 0; i < n; i++) {
-				int x = ncx[i];
-				if (x == 3) {	nx3++; mcnx3 = cx[i];}	// need one later			
-				if (x == 2)nx2++;
-
-			}
-		}
-
-		//DumpInit();
-	}
-	void DumpInit(int ib = 0) {
-		for (int i = 0; i < 27; i++) cout << b0[i] + 1;
-		cout << " band index" << ib << " minirows" << endl;;
-		for (int ir = 0, i = 0; ir < 3; ir++) {
-			for (int j = 0; j < 3; j++, i++)
-				cout << Char9out(minirows[i]) << "_";
-			cout << endl;
-		}
-		cout << "minicols" << endl;
-		for (int ir = 0, i = 0; ir < 3; ir++) {
-			for (int j = 0; j < 3; j++, i++)
-				cout << Char9out(minicols[i]) << "_";
-			cout << endl;
-		}
-
-	}
-
-	int ipr, ipst,ipb1, 
-		nx3, nx2,mcnx3,nxcols; // perms rows stacks
-	int* rr, r1, r2, r3, rd1, rd2, rd3, * mr1, * mr2, * mr3;
-	int cx[9], * px;// minicols of the perm
-	int c1n, c2n, c3n, c4n, c5n, c6n, c7n, c8n, c9n;
-	int c1, c3, c4, c5, c6, c7, c8;
-	int m1, m2, m3, m4, m5, m6, m7, m8, m9;
-	int mc1, mc2, mc3, mc4, mc5, mc6, mc7, mc8, mc9;
-	int* ss, s1, s2, s3, m123, m456, m789, m457, m689, mx89, mini6;
-	int m45, m89, mx, m12;
-	int r2c7, r2c8, ir2c4, ir2c7,r3c1,r3c2;
-	void Mapping() {
-		int dmr[9];
-		// row map is given in *rr
-		// colmap combine c.n and cx[]
-		bitscanforward(dmr[0], m1); bitscanforward(dmr[1], m2);
-		bitscanforward(dmr[2], m3); bitscanforward(dmr[3], m4);
-		bitscanforward(dmr[4], m5); bitscanforward(dmr[5], m6);
-		bitscanforward(dmr[6], m7); bitscanforward(dmr[7], m8);
-		bitscanforward(dmr[8], m9);
-		for (int i = 0; i < 9; i++)dmap[dmr[i]] = i;
-		cmap[0] = px[c1n]; cmap[1] = px[c2n]; cmap[2] = px[c3n];
-		cmap[3] = px[c4n]; cmap[4] = px[c5n]; cmap[5] = px[c6n];
-		cmap[6] = px[c7n]; cmap[7] = px[c8n]; cmap[8] = px[c9n];
-		MapR3();
-	}
-	int CheckMapping() {
-		Mapping();
-		int cx = 0, dx = 0;
-		for (int i = 0; i < 9; i++) {
-			int c = cmap[i], d = dmap[i];
-			if (c < 0 || d < 0 || c>8 || d>8) return 1;
-			cx |= 1 << c; dx |= 1 << d;
-		}
-		if (dx != 0x1ff || cx != 0x1ff) return 1; 
-		return 0;
-	}
-	void DumpMapping() {
-		cout << "Mapping status perms" << ipr << ipst << " rows " << r1 << r2 << r3 << endl;
-		cout << "columns ";
-		for (int i = 0; i < 9; i++) cout << cmap[i] << ",";
-		cout << " digits ";
-		for (int i = 0; i < 9; i++) cout << dmap[i] << ",";
-		cout << endl;
-		int d[27];
-		Map(d);
-	}
-	void Map(int* d) {
-		for (int irow = 0; irow < 3; irow++) {
-			int* rold = &b0[9 * rr[irow]],
-				* dr = &d[9 * irow];
-			for (int ic = 0; ic < 9; ic++) {
-				dr[ic] = dmap[rold[cmap[ic]]];
-				cout << dr[ic] + 1;
-			}
-		}
-		cout << endl;
-	}
-	void MapR3() {
-		int* rold = &b0[9 * rr[2]];
-		for (int ic = 0; ic < 9; ic++) {
-			r3mapped[ic] = dmap[rold[cmap[ic]]];
-			r3c[ic] = r3mapped[ic] + '1';
-		}
-		r3c1 = r3mapped[0]; r3c2 = r3mapped[1];
-		//cout << r3c << " r3 mapped " << endl;
-	}
-
-	void Status(int op = 0) {
-		cout << "setupr col perm "<<ipr << ipst << " ir2c4=" << ir2c4 << endl;
-		cout << Char9out(m123) << " m123 " << endl;
-		cout << Char9out(m456) << " m456 " << endl;
-		cout << Char9out(m789) << " m789 " << endl;
-		cout << Char9out(m1) << " m1 " << endl;
-		cout << Char9out(m2) << " m2 " << endl;
-		cout << Char9out(m3) << " m3 " << endl;
-		cout << Char9out(m4) << " m4 " << endl;
-		cout << Char9out(m5) << " m5 " << endl;
-		cout << Char9out(m6) << " m6 " << endl;
-		cout << Char9out(m7) << " m7 " << endl;
-		cout << Char9out(m8) << " m8 " << endl;
-		cout << Char9out(m9) << " m9 " << endl;
-
-		cout << Char9out(mx) << " mx (r2c4) " << endl;
-		cout << Char9out(r2c7) << " r2c7 " << endl;
-		cout << Char9out(r2c8) << " r2c8 " << endl;
-		if (!op) return;
-		cout << Char9out(m457) << " m457 " << endl;
-		cout << Char9out(mx89) << " mx89 " << endl;
-		cout << Char9out(mini6) << " mini6 " << endl;
-
-		cout << Char9out(mc1) << " mc1 " << endl;
-		cout << Char9out(mc4) << " mc4 " << endl;
-		cout << Char9out(mc3) << " mc3 " << endl;
-		cout << Char9out(mc6) << " mc6 " << endl;
-		cout << Char9out(mc7) << " mc7 " << endl;
-
-	}
-	inline void SetupR(int* mmr) {
-		bindex = -1;// init to not valid
-		r1 = rr[0]; r2 = rr[1]; r3 = rr[2];
-		rd1 = 3 * r1; rd2 = 3 * r2; rd3 = 3 * r3;
-		mr1 = &mmr[rd1]; mr2 = &mmr[rd2]; mr3 = &mmr[rd3];
-		//cout << "setupr rows " << r1 << r2 << r3 << endl;
-	}
-	inline void SetupS() {
-		s1 = ss[0]; s2 = ss[1]; s3 = ss[2];
-		m123 = mr1[s1];	m456 = mr1[s2];	m789 = mr1[s3];
-		m457 = mr2[s1];
-		if (_popcnt32(m456 & m457) != 2) return;
-		m689 = mr3[s1]; mx89 = mr2[s2]; mini6 = mr2[s3];
-		m45 = m456 & m457; m6 = m456 & ~m45; m7 = m457 & ~m45;
-		m89 = m789 & ~m7; mx = mx89 & ~m89;
-
-		GetC3(); GetC6(); GetC7();
-		m3 = m123 & mc3; m12 = m123 & ~m3;
-		if (mx & mc6) { T412p(); return; }
-		GetC4(); GetC1(); GetC8();
-		if (CheckR2c4()) return;
-		r2c7 = mini6 & mc7; r2c8 = mini6 & mc8;
-		//if (indexlim == 347 && ipr==0 && ipst==0) {	cout << "debug" << endl;	Status();	}
-		//return;
-		switch (ir2c4) {
-		case 1:if (Check1R2c7()) return; T1r2c4(); break;
-		case 2:if (Check2R2c7()) return; T2r2c4(); break;
-		case 3:if (Check3R2c7()) return; T3r2c4(); break;
-		}
-
-	}
-	int ValidMinlex(int i) {
-		p_cpt2g[10]++;
-		/*
-		if(sgo.vx[1])
-			cout << "valid minlex index " << i << " ipr=" << ipr << " ipst= " << ipst << endl;
-		if (sgo.vx[0]==1) {// test of all solutions
-			if (i != indexlim) {
-				cout << " not the right index" << endl;
-				goback=1;
-			}
-			if (CheckMapping()) { DumpMapping(); goback = 1; }
-			//if (indexlim > 414) { Mapping(); DumpMapping() }
-			return goback;
-		}
-		*/
-		indexret = i;
-		goback = 1;	return 1;
-	}
-
-	int Row3(int index) {
-		int ideb = bminlex_tindex[index++]; int iend = bminlex_tindex[index];
-		for (int i = ideb; i < iend; i++) {
-			const register char* tt = t416[i];
-			//cout << tt << " to check" << endl;
-			register int c= r3mapped[3],cc=tt[10]-'1';
-			if(cc>c )return 0;
-			if (cc < c)continue;
-			c = r3mapped[4]; cc = tt[11] - '1';
-			if (cc > c)return 0;
-			if (cc < c)continue;
-			c = r3mapped[6]; cc = tt[13] - '1';
-			if (cc > c)return 0;
-			if (cc < c)continue;
-			c = r3mapped[7]; cc = tt[14] - '1';
-			if (cc > c)return 0;
-			if (cc < c)continue;
-			return ValidMinlex(i);
-		}
-		return 0;
-	}
-	int Row3_6cases(int index) {// 68 69 86 89 96 98
-		if (r3mapped[0] == 5) {// 68 69
-			if (r3mapped[1] == 8)index++;
-		}
-		else {
-			index += 2;
-			if (r3mapped[0] == 7) {// 86 89
-				if (r3mapped[1] == 8)index++;
-			}
-			else {//96 98
-				index += 2;
-				if (r3mapped[1] == 7)index++;
-			}
-		}
-		return Row3(index);
-	}
-
-	inline void T1r2c4() {// 78used 23 26 32 62 63
-		if (r2c7 == m3 && r2c8 == m6) return;
-		Mapping();
-		if (r2c7 == m2) {
-			//  31, 65, 92, 110, 126, 135,		//00_ 123 
-			//	139, 166, 186, 196, 208, 214,	//06_ 126 
-			if (r2c8 == m3) { Row3_6cases(0); return;	}
-			if (r2c8 == m6) { Row3_6cases(6); return; }
-		}
-		else if (r2c7 == m3) {
-			//	217, 234, 239,	//12_ 132 68 69 86(1)
-			if (r2c8 == m2) {
-				if (r3mapped[0] == 8)  return; // no 9
-				if (r3mapped[0] == 7 ){// 86
-					if (r3mapped[1] == 8)  return; // no 9
-					Row3(14); return; // 86
-				}
-				Row3((r3mapped[1] == 7)?12:13); return;//68 69
-			}
-			else return;
-
-		}
-		else if (r2c7 == m6) {
-			//  240, 262, 277, 284, 298, 303,	//15_ 162 
-			//	309, 322, 332, 334, 343, 346,	//21_ 163  
-			if (r2c8 == m2) { Row3_6cases(15); return; }
-			if (r2c8 == m3) { Row3_6cases(21); return; }
-
-		}
-	}
-	inline void T2r2c4() {// used 16 61 63
-		if (r2c7 == m3) return;
-		if (r2c7 == m1 && r2c8 == m3) return;
-		Mapping(); ;
-		if (r2c7 == m1) {
-			//  347, 349, 354, 357,		//27_ 216 68 69 86 89
-			if (r3mapped[0] == 8)  return; // no 9
-			if (r3mapped[0] == 7) {// 86 89
-				Row3((r3mapped[1] == 8) ? 30 : 29); return;
-			}
-			Row3((r3mapped[1] == 8) ? 28 : 27); return; // 68 69
-		}
-		else if (r2c7 == m6) {
-			//	359, 362, 366, 369, 375, 378,	//31_ 261
-			//	379, 381, 382, 386, 392, 395,	//37_ 263
-			if (r2c8 == m1) { Row3_6cases(31); return; }
-			if (r2c8 == m3) { Row3_6cases(37); return; }
-
-		}
-	}
-	inline void T3r2c4() {// used 61 62
-		if (r2c7 != m6) return;
-		// 397, 407,		//43_ 361 89 98
-		// 409, 411,		//45_ 362 89 98
-		Mapping();
-		if (r3mapped[2] != 5)  return; //  6 in r3c3
-		if (r2c8 == m1)	{ Row3((r3mapped[0] == 8) ? 44 : 43); return;}
-		if (r2c8 == m2) { Row3((r3mapped[0] == 8) ? 46 : 45); return; }
-	}
-	inline void T412p() {// must be 3 in r4c6
-		//cout << ipr << ipst << "try T412p()" << endl;
-		if (!nx3) return;
-		if (mc3 != mc6 || mc3 != mc7) return;
-		if (!(m3 & mc6)) return;  
-		if (!(m7 & mc6)) return;
-		if (!(m6 & mc6)) return;
-		//cout << "possible T412p() nx3 nx2 " << nx3 << " " << nx2<< " ip r/st " <<ipr<<ipst<< endl;
-		int c12 = 7 & ~c3;
-		bitscanforward(c1n, c12);
-		bitscanreverse(c2n, c12);
-		if (nx3 == 3) { T412(); return; }
-		T413p();
-		if (goback) return;
-		bitscanforward(c2n, c12);
-		bitscanreverse(c1n, c12);
-		T413p();
-		//cout << r3c << " r3 mapped " << endl;
-	}
-	inline int T412() {//457 893 612 896 127 345
-		if (ipr || ipst) return 0;
-		mc1= cx[c1n]; mc2= cx[c2n];
-		m1 = m123 & mc1; m4 = m456 & mc1; m8 = m789 & mc1;
-		m2 = m123 & mc2; m5 = m456 & mc2; m9 = m789 & mc2;
-		for (int i = 3; i < 6; i++)if (m4 & cx[i]) {
-			c4n = i; 	c5n = 12 - c4n - c6n; // cols 3 4 5
-			break;
-		}
-		for (int i = 6; i < 9; i++)if (m8 & cx[i]) {
-			c8n = i; c9n = 21 - c8n - c7n; 
-			break;
-		}
-		return	ValidMinlex(412);
-	}
-	inline int T413p() {
-		mc1 = cx[c1n]; mc2 = cx[c2n];
-		m1 = m123 & mc1; m4 = m456 & mc1; mx = m789 & mc1;
-		m2 = m123 & mc2; m5 = m456 & mc2; 
-		for (int i = 3; i < 6; i++)if (m4 & cx[i]) {
-			c4n = i; 	c5n = 12 - c4n - c6n; 
-			mc4 = cx[c4n]; mc5 = cx[c5n];
-			break;
-		}
-		m8 = m789 & mc4; m9 = m789 & mc5;
-		for (int i = 6; i < 9; i++)if (m8 & cx[i]) {
-			c8n = i; c9n = 21 - c8n - c7n;
-			mc8 = cx[c8n]; 
-			break;
-		}
-		if (!(m5 & mc8)) return 0;
-		if (!(m1 & mc8)) return 0;
-		if (m8 & mc1) {
-			if (m1 & mc4)  return	ValidMinlex(413);
-			else  return	ValidMinlex(414);
-		}
-		else {
-			if (!(m2 & mc4)) return 0;
-			return	ValidMinlex(415);
-		}
-	}
-
-
-	inline void GetC3() {
-		for (int i = 0; i < 3; i++)if (m7 & cx[i]) {
-			c3n = i; c3 = 1 << i; mc3 = cx[i]; return;
-		}
-	}
-	inline void GetC6() {
-		for (int i = 3; i < 6; i++)if (m6 & cx[i]) {
-			c6n = i; c6 = 1 << i; mc6 = cx[i]; return;
-		}
-	}
-	inline void GetC7() {
-		for (int i = 6; i < 9; i++)if (m7 & cx[i]) {
-			c7n = i; c7 = 1 << i; mc7 = cx[i]; return;
-		}
-	}
-	inline void GetC4() {
-		for (int i = 3; i < 6; i++)if (mx & cx[i]) {
-			c4n = i; c4 = 1 << i; mc4 = cx[i];
-			m4 = m456 & mc4; m5 = m456 & ~(m4 | m6);
-			c5n = 12 - c4n - c6n; // cols 3 4 5
-			mc5 = cx[c5n]; m8 = mx89 & mc5; m9 = mx89 & mc6;
-			return;
-		}
-	}
-	inline void GetC1() {
-		for (int i = 0; i < 3; i++)if (m4 & cx[i]) {
-			c1n = i; c1 = 1 << i; mc1 = cx[i];
-			m1 = m123 & mc1; m2 = m123 & ~(m1 | m3);
-			c2n = 3 - c1n - c3n; // cols 012
-			mc2 = cx[c2n];
-			return;
-		}
-	}
-	inline void  GetC8() {
-		for (int i = 6; i < 9; i++)if (m8 & cx[i]) {
-			c8n = i; c8 = 1 << i; mc8 = cx[i];
-			c9n = 21 - c8n - c7n; // cols 678
-			mc9 = cx[c9n];
-			return;
-		}
-	}
-	inline int CheckR2c4() {
-		if (mx == m1)ir2c4 = 1;
-		else if (mx == m2)ir2c4 = 2;
-		else if (mx == m3)ir2c4 = 3;
-		else return 1;
-		return 0;
-	}
-	inline int Check1R2c7() {
-		if (r2c7 == m2)ir2c7 = 2;
-		else if (r2c7 == m3)ir2c7 = 3;
-		else if (r2c7 == m6)ir2c7 = 6;
-		else return 1;
-		return 0;
-	}
-	inline int Check2R2c7() {
-		if (r2c7 == m1)ir2c7 = 1;
-		else if (r2c7 == m6)ir2c7 = 6;
-		else return 1;
-		return 0;
-	}
-	inline int Check3R2c7() {
-		if (r2c7 == m6)ir2c7 = 6;
-		else return 1;
-		return 0;
-	}
-
-	int GetMinIfNotBelow(int* grid, int myb1 = 415) {
-		indexret = -1;
-		Init(grid, myb1);
-		if (Is456minir4()) { Go_0_30(); return-1; }
-		//cout << " over 30" << endl;
-		// now minir4 is 457 index 31_415
-		for (ipr = 0; ipr < 6; ipr++) {// 6 pairs rows
-			rr = tpermgang[ipr];
-			SetupR(minirows);
-			for (ipst = 00; ipst < 6; ipst++) {// 6 pairs stacks
-				px = tpermg9stk[ipst];
-				for (int i = 0; i < 9; i++)cx[i] = minicols[px[i]];
-				ss = tpermgang[ipst];
-				SetupS();
-				if (goback) break;
-			}
-			if (goback) break;
-		}
-		return -1;
-	}
-	void Go_0_30() {
-		//cout << "entry " << indexlim << " ncols =" << nxcols << endl;
-		if (indexlim > 30) return;
-		for (ipr = 0; ipr < 6; ipr++) {// 6 pairs rows
-			if (nxcols == 3 && ipr) continue;
-			rr = tpermgang[ipr];
-			r1 = rr[0]; r2 = rr[1]; r3 = rr[2];
-			rd1 = 3 * r1;mr1 = &minirows[rd1];
-			for (ipst = 00; ipst < 6; ipst++) {// 6 pairs stacks
-				if (nxcols == 3 && ipst > 1) continue;
-				px = tpermg9stk[ipst];
-				for (int i = 0; i < 9; i++)cx[i] = minicols[px[i]];
-				ss = tpermgang[ipst];
-				m123= mr1[ss[0]]; m456 = mr1[ss[1]]; m789 = mr1[ss[2]];
-				int mr2s1 = minirows[3 * r2 + ss[0]];// minirow 2 in box1
-				if (m456 != mr2s1) continue;// not a valid stack order
-				for (ipb1 = 0; ipb1 < 3; ipb1++) { Go_0_30A(); if (goback) break; }
-				if (goback) break;
-			}
-			if (goback) break;
-		}
-
-	}
-	void Go_0_30A() {// mode 6 in r2c3 for a given perm rows stacks b1
-		if (nxcols == 3 && ipb1)return;		
-		// find a match for the columns and first check
-		c1n = ipb1; mc1 = cx[ipb1]; // first column box 1
-		m1= mc1 & m123; m4 = mc1 & m456;
-		for (int i = 3; i < 6; i++) {
-			if (cx[i] & m4) {// this is cx 47 ?
-				c4n = i; mc4 = cx[i];
-				m7 = m789 & mc4;
-				break;
-			}
-		}
-		// must choose column 2
-		int cols23 = 7 & ~(1 << ipb1),a,b;
-		bitscanforward(a, cols23); bitscanreverse(b, cols23);
-		Go_0_30B(a, b);
-		if (goback) return;
-		if (nxcols != 3)Go_0_30B(b, a);
-	}
-
-	void Status6() {
-		cout << "setupr col perm " << ipr << ipst <<  ipb1 << endl;
-		cout << c1n << c2n << c3n << c4n << c5n << c6n << c7n << c8n << c9n << endl;
-		cout << Char9out(m123) << " m123 " << endl;
-		cout << Char9out(m456) << " m456 " << endl;
-		cout << Char9out(m789) << " m789 " << endl;
-		cout << Char9out(m1) << " m1 " << endl;
-		cout << Char9out(m2) << " m2 " << endl;
-		cout << Char9out(m3) << " m3 " << endl;
-		cout << Char9out(m4) << " m4 " << endl;
-		cout << Char9out(m5) << " m5 " << endl;
-		cout << Char9out(m6) << " m6 " << endl;
-		cout << Char9out(m7) << " m7 " << endl;
-		cout << Char9out(m8) << " m8 " << endl;
-		cout << Char9out(m9) << " m9 " << endl;
-
-		cout << Char9out(mc1) << " mc1 " << endl;
-		cout << Char9out(mc2) << " mc2 " << endl;
-		cout << Char9out(mc3) << " mc3 " << endl;
-		cout << Char9out(mc4) << " mc4 " << endl;
-		cout << Char9out(mc5) << " mc5 " << endl;
-		cout << Char9out(mc6) << " mc6 " << endl;
-		cout << Char9out(mc7) << " mc7 " << endl;
-		cout << Char9out(mc8) << " mc8 " << endl;
-		cout << Char9out(mc9) << " mc9 " << endl;
-
-	}
-	int Go_0_30B(int i2,int i3) {
-		c2n = i2; mc2 = cx[i2];
-		c3n = i3; mc3 = cx[i3];
-		m2 = mc2 & m123; m5 = mc2 & m456;
-		m3 = mc3 & m123; m6 = mc3 & m456;
-		for (int i = 3; i < 6; i++) {
-			if (cx[i] & m5) {// this is cx 58 ?
-				c5n = i; mc5 = cx[i]; 
-				m8 = m789 & mc5;
-			}
-			else if (cx[i] & m6) {// this is cx 69 ?
-				c6n = i; mc6 = cx[i];
-				m9 = m789 & mc6;
-			}
-		}
-		for (int i = 6; i < 9; i++) {
-			if (cx[i] & m7) {	c7n = i; mc7 = cx[i];}
-			else if (cx[i] & m8) {c8n = i; mc8 = cx[i];	}
-			else {	c9n = i;mc9= cx[i];	}
-		}
-		if (mc1 & m9) return 0; // never minimal
-		if (mc7 & m3) return 0;  
-		if (mc8 & m1) return 0;  
-		if (nxcols == 3) return ValidMinlex(0);
-		if (nxcols == 5) {//"789123 789123 465"
-			if (!(m4 & mc7))return 0;
-			if (!(m6 & mc8))return 0;
-			return ValidMinlex(1);
-		}
-		if (nxcols == 6) {// 2 17 26
-			// 789123 start row3
-			if (!(m7 & mc1)) return 0;	
-			if (!(m8 & mc2)) return 0;
-			if (!(m1 & mc4)) return 0;	
-			if (!(m2 & mc5)) return 0;
-			//minirows 3  123 564 b 2
-			//			  132 546 b 17
-			//			  231 645 b 26
-			if (m3 & mc7)return 0;		
-			if (m4 & mc7)return 0;
-
-			if (m1 & mc7) {// 2 or 17
-				if(!(m5&mc7)) return 0;
-				if (m2 & mc8) {// 2 
-					if (!(m6 & mc8)) return 0;
-					return	ValidMinlex(2);
-				}
-				else {
-					if (!(m4 & mc8)) return 0;
-					return	ValidMinlex(17);
-				}
-			}
-			else {// 26
-				if (!(m3 & mc8)) return 0;
-				if (!(m6 & mc7)) return 0;
-				if (!(m4 & mc8)) return 0;
-				return	ValidMinlex(26);
-			}
-		}
-		if (nxcols == 7) {// 3 4 8 18 20
-			if (!(m1 & mc7)) return 0;
-			if (!(m7 & mc1)) return 0;	
-			if (m3 & mc4) return 0;
-			if (m2 & mc8) {//3 4 8 7.. 132 /b3,8 465 /b4 546
-				if (!(m1 & mc4)) return 0;
-				if (!(m3 & mc5)) return 0;
-				if ((m4 & mc7)) {// 3 or 8 
-					if (!(m6 & mc8)) return 0;
-					if (m8 & mc2)	return	ValidMinlex(3);
-					else			return	ValidMinlex(8);
-				}
-				else {//3 band 4
-					if (!(m8 & mc2)) return 0;
-					if (!(m5 & mc7)) return 0;
-					if (!(m4 & mc8)) return 0;
-					return	ValidMinlex(4);
-				}
-			}
-			else {//18 789 132 546  //20 789 213 456
-				if (!(m8 & mc2)) return 0; // 789
-				if (!(m6 & mc9)) return 0; // 546 456
-
-				if ((m1 & mc4)) {//18 789 132 546
-					if (!(m3 & mc5)) return 0;
-					if (!(m5 & mc7)) return 0;
-					return	ValidMinlex(18);
-				}
-				else {//20 789 213 456
-					if (!(m1 & mc5)) return 0;
-					if (!(m4 & mc7)) return 0;
-					return	ValidMinlex(20);
-				}
-			}
-		}
-		if (nxcols == 8) {//5,9,10,19,21,22,27
-			//if (!(m1 & mc7)) return;
-			if (!(m7 & mc1)) return 0;
-			if (m4 & mc7) return 0;
-			if (m1 & mc7 ) {
-				if (m2 & mc8) {// r2c8=2  5,9,10
-					//r3 7.. 132 5..
-					if (!(m1 & mc4)) return 0;
-					if (!(m3 & mc5)) return 0;
-					if (!(m5 & mc7)) return 0;
-					if (m8 & mc2) {// 789132564 b5
-						if (!(m6 & mc8)) return 0;
-						return	ValidMinlex(5);
-					}
-					else {// 798132 + 546/9 564/10
-						if (m4 & mc8) return	ValidMinlex(9);
-						else return	ValidMinlex(10);
-					}
-				}
-				else {// r2c8=3 19,21,22 r3 789 ... ...
-					if (!(m8 & mc2)) return 0;
-					if (m1 & mc4) {//b19 789 132 564
-						if (!(m3 & mc5)) return 0;
-						if (!(m5 & mc7)) return 0;
-						if (!(m6 & mc8)) return 0;
-						return	ValidMinlex(19);
-					}
-					else {//789 213 6..
-						if (!(m1 & mc5)) return 0;
-						if (!(m6 & mc7)) return 0;
-						if (m4 & mc8) return	ValidMinlex(21);
-						else return	ValidMinlex(22);
-					}
-				}
-			}
-			else {// r2c7=2 b27 231 789 132 546
-				if (!(m3 & mc8)) return 0;
-				if (!(m8 & mc2)) return 0;
-				if (!(m1 & mc4)) return 0;
-				if (!(m3 & mc5)) return 0;
-				if (!(m5 & mc7)) return 0;
-				if (!(m4 & mc8)) return 0;
-				return	ValidMinlex(27);
-			}
-		}
-		if (m1 & mc7) {
-			if (!(m2 & mc4)) return 0;
-			if (m2 & mc8) {//R3  ... 2.. ...
-				if (m7 & mc1) {// r3 7.. 2.. ...
-					if (m8 & mc2) {// r3 789 231  /b6 564 /b7 645 ...
-						if (!(m3 & mc5)) return 0;
-						if (m4 & mc7) return 0;
-						if (m5 & mc8) return 0;
-						if (m5 & mc7) return	ValidMinlex(6);
-						else return	ValidMinlex(7);
-					}
-					else {// r3 798 2.. ... b11,12,13,14
-						if (m1 & mc5) {// 798 213  /b11 564 /b12 654
-							if (!(m4 & mc9)) return 0;
-							if (m5 & mc7) return	ValidMinlex(11);
-							else return	ValidMinlex(12);
-
-						}
-						else {// r3 798 231 //b13 564 /b14 645
-							if (m4 & mc7) return 0;
-							if (m5 & mc8) return 0;
-							if (m6 & mc9) return 0;
-							if (m5 & mc7) return	ValidMinlex(13);
-							else return	ValidMinlex(14);
-						}
-					}
-				}
-				else {// r3 897 231 ... b15  564, b16 645
-					if (!(m9 & mc2)) return 0;
-					if (!(m3 & mc5)) return 0;
-					if (m4 & mc7) return 0;
-					if (m5 & mc8) return 0;
-					if (m6 & mc9) return 0;
-					if (m5 & mc7) return	ValidMinlex(15);
-					else return ValidMinlex(16);
-				}
-			}
-			else {// b23,24,25 ..9 231 5..
-				if (!(m9 & mc3)) return 0;
-				if (!(m2 & mc4)) return 0;
-				if (!(m3 & mc5)) return 0;
-				if (!(m5 & mc7)) return 0;
-				if (m7 & mc1) {// 789 231 5..  
-					if (m4 & mc8) return	ValidMinlex(23);
-					else return	ValidMinlex(24);
-				}
-				else {// b25 879 231 564 
-					if (!(m6 & mc8)) return 0;
-					return	ValidMinlex(25);
-				}
-			}
-		}
-		else {//28,29,30 231
-			if (!(m3 & mc8)) return 0;
-			if (m8 & mc2) {//789 /b28 231 564  /b29 312 456
-				if (m2 & mc4) {//b28
-					if (!(m3 & mc5)) return 0;
-					if (!(m5 & mc7)) return 0;
-					if (!(m6 & mc8)) return 0;
-					return	ValidMinlex(28);
-				}
-				else if (m3 & mc4) {//B29
-					if (!(m1 & mc5)) return 0;
-					if (!(m4 & mc7)) return 0;
-					if (!(m5 & mc8)) return 0;
-					return	ValidMinlex(29); 
-				}
-			}
-			else {//798 213 645 b30
-				if (!(m7 & mc1)) return 0;
-				if (!(m9 & mc2)) return 0;
-				if (!(m2 & mc4)) return 0;
-				if (!(m1 & mc5)) return 0;
-				if (!(m6 & mc7)) return 0;
-				if (!(m4 & mc8)) return 0;
-				return	ValidMinlex(30);
-			}
-		}
-		cout << "unknown entry" << endl;
-		return 0;
-	}
-	inline int Is456minir4() {
-		return ((minirows[0] == minirows[4]) || (minirows[0] == minirows[7]));
-	}
-
-	void SetPout(int iret);
-}bmlw;
-
-
-void Go_c17_93bbb() {// analysis the 416 bands
+void Go_c17_93aaaa() {// analysis the 416 bands
 	int* a = genb12.grid0, * b = genb12.colband1;
 	for (uint32_t ib = 0; ib <= 415; ib++) {
-		//if (ib > 30 && ib < 412) continue;
-		//if (ib  <412) continue;
-		//if (ib !=413) continue;
+		if (ib < 30 ) continue;
+		//if (ib < 346) continue;
+		//if (ib  >400) continue;
+
+		//if (ib >20) continue;
 		genb12.InitBand1(ib);
+		//int vr=bmlw.GetforMinlex(a, ib);
+		int vr = bmlw.GetforMinlex(a, 30);
+		if (bmlw.maxindex == bmlw.minindex) continue;
+		if (bmlw.goback)continue;
 		for (int i = 0; i < 27; i++) cout << a[i] + 1;
-		cout << " band index" << ib << endl;;
-		bmlw.GetMinIfNotBelow(a, ib);
+		cout << " band index" << ib <<" vr = "<< vr << endl;;
+		//bmlw.GetMinIfNotBelow(a, ib);
 	}
 	cout << p_cpt2g[10] << " hits on valid bands"<<endl;
 }
 
 void Go_c17_93() {// analysis of the 30 first bands
 	int* a = genb12.grid0, * b = genb12.colband1;
-	
+
 	int g[27];
 	for (uint32_t i = 0; i <= 415; i++) {
 		genb12.InitBand1(i);
-		BANDMINLEX::PERM  p= automorphsp[100];
+		BANDMINLEX::PERM  p = automorphsp[100];
 		for (int ir = 0; ir < 3; ir++) {
-			int ior = p.rows[ir] * 9,idr=9*ir;
+			int ior = p.rows[ir] * 9, idr = 9 * ir;
 			for (int ic = 0; ic < 9; ic++) {
 				int ocell = ior + p.cols[ic], dcell = idr + ic;
 				g[dcell] = p.map[a[ocell]];
 			}
 		}
-		cout << "bande " << i << endl;
-		BandDump(a, "source");	BandDump(g, "morph");
 		for(int j=0;j<100000;j++)
-			//bmlw.GetMinIfNotBelow(a, i);
+			bmlw.GetforMinlex(a, 0);
+		//bmlw.GetMinIfNotBelow(a, i);
 
-			bandminlex.Getmin(a, &p);
-		//cout << "id seen" << p.i416 << endl;
 	}
-	cout << p_cpt2g[10] << " hits on valid bands" << endl;
+	cout << p_cpt2g[10] << " hits on valid bands" 
+		<< " [20] " << p_cpt2g[20] << " [21] " << p_cpt2g[21]
+		<< " [22] " << p_cpt2g[22] << " [23] " << p_cpt2g[23]
+		<< " [30] " << p_cpt2g[30] << endl;
 
 	return;
 	
+
 
 	//for (uint32_t i = 0; i <= 30; i++) {
 
@@ -3359,7 +2581,6 @@ void Go_c17_93() {// analysis of the 30 first bands
 			}
 			if (v) { ncx[n] = 1; cx[n++] = v; }
 		}
-		//if (n == 9 && tblnauto[ib] == 0) continue;
 		int nx3 = 0, nx2 = 0;
 		for (int i = 0; i < n; i++) {
 			int x = ncx[i];
@@ -3367,6 +2588,34 @@ void Go_c17_93() {// analysis of the 30 first bands
 			if (x == 2)nx2++;
 
 		}
+
+		if (n == 9 && ib<=30) {
+			/*
+				for (int i = 0, x = 0; i < 3; i++) {
+				for (int j = 0; j < 3; j++) {
+					for (int k = 0; k < 3; k++, x++)cout << a[x] + 1;
+					cout << " ";
+				}
+				cout << "_ ";
+			}
+			cout << "  " << ib << " " << ++p_cpt2g[10] << endl;
+			*/
+			register uint32_t v = 111111111 +
+				100000000 * a[12] + 10000000 * a[15] + 1000000 * a[16];
+			v += 100000 * a[18] + 10000 * a[19];
+			v += 1000 * a[21] + 100 * a[22];
+			v += 10 * a[24] + a[25];
+			cout << v << ",";
+			fout1 << ib << ",";
+			if (++p_cpt2g[10] == 10) {
+				cout << "//" << p_cpt2g[11] << endl;
+				fout1 << "//" << p_cpt2g[11] << endl;
+				p_cpt2g[10] = 0;
+			}
+			p_cpt2g[11]++;
+			continue;
+		}
+		else 	continue;
 		for (int i = 0, x = 0; i < 3; i++) {
 			for (int j = 0; j < 3; j++) {
 				for(int k=0;k<3;k++,x++)cout << a[x] + 1;
@@ -3378,11 +2627,15 @@ void Go_c17_93() {// analysis of the 30 first bands
 		//for (int i = 0; i < 27; i++) cout << a[i] + 1;
 		cout << "  " << ib //<< "\tnauto=" <<(int) tblnauto[ib] 
 			<< "    \t" << n << " " <<nx3<<" " <<nx2<< endl;
-		if (0)for (int i = 0; i < n; i++) {
-			cout << Char9out(cx[i]) << " ncx= " << ncx[i] << endl;
-		}
-		if (0) {
-			
+		if (1)for (int i = 0; i < n; i++) {
+			if (ncx[i] > 1) {
+				int x = cx[i];
+				cout << Char9out(x) << " ncx= " << ncx[i] << "\t";
+				for (int j = 0; j < 9; j++) if (x == b[j])
+					cout << j << " ";
+				cout << endl;
+
+			}
 		}
 	}
 

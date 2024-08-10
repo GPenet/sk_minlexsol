@@ -788,7 +788,6 @@ int BANDMINLEX::Getmin(int * b0,PERM * pout_user,int ediag){
 	if ((minirows[0] | minirows[1] | minirows[2]) != 0x1ff) return -3;
 	if ((minirows[3] | minirows[4] | minirows[5]) != 0x1ff) return -3;
 	if ((minirows[6] | minirows[7] | minirows[8]) != 0x1ff) return -3;
-
 	if ((minirows[0] == minirows[4]) || (minirows[0] == minirows[7]))
 		return Getmin6();
 	else return Getmin7();
