@@ -21,6 +21,10 @@ struct BANDPERM {
 		for (int i = 0; i < 9; i++)		cols[i] = map[i] = i;
 		for (int i = 0; i < 3; i++)		rows[i] = i;
 	}
+	void MorphOrdered(int* a,int* b) {
+
+	}
+
 	void Dump() {
 		cout << "perm status i416=" << i416 << endl;
 		cout << "rows " << rows[0] << rows[1] << rows[2] << endl;
@@ -31,7 +35,7 @@ struct BANDPERM {
 			<< map[3] << map[4] << map[5] << map[6]
 			<< map[7] << map[8] << endl;
 	}
-}*pout;
+};
 struct BMINLEX {// receive a band send back i416 and morphing data
 	int minirows[9], minicols[9], cx[9], minirr[9];
 	int* minir0[3], * minic0[3],*minird[3];
@@ -39,7 +43,7 @@ struct BMINLEX {// receive a band send back i416 and morphing data
 		minir0[0] = minirows; minir0[1] = &minirows[3]; minir0[2] = &minirows[6];
 		minic0[0] = minicols; minic0[1] = &minicols[3]; minic0[2] = &minicols[6];
 	}
-	BANDPERM *pout;
+	BANDPERM pout;
 	int* b0;
 	int	indexlim,minindex,maxindex,  goback,  maxret,indexret,bindex;
 	int cmap[9], dmap[9], r3mapped[9],crit4,crit4b,critcomp;
@@ -60,6 +64,7 @@ struct BMINLEX {// receive a band send back i416 and morphing data
 	void DumpInit(int ib = 0) ;
 	int SetMinMax(int min, int max) ;
 	inline void MapDigits();
+	inline void EndMapping();
 	void Mapping() ;
 	int CheckMapping() ;
 	void DumpMapping() ;
@@ -68,7 +73,7 @@ struct BMINLEX {// receive a band send back i416 and morphing data
 	uint32_t Map4Pats(int a, int b, int c, int d) ;
 	void Status(int op = 0) ;
 	
-	int ValidMinlex(int i);
+	int ValidMinlex(int i,int endmap=1);
 	inline int Vret();
 
 	int GetforMinlex(int* grid, int myb1);
@@ -113,7 +118,16 @@ inline void  BMINLEX::MapDigits()
 	bitscanforward(r, m7); dmap[r] = 6; bitscanforward(r, m8); dmap[r] = 7;
 	bitscanforward(r, m9); dmap[r] = 8;
 }
-
+inline void  BMINLEX::EndMapping()
+{
+	int* cm = pout.cols;
+	cm[0] = px[c1n]; cm[1] = px[c2n]; cm[2] = px[c3n];
+	cm[3] = px[c4n]; cm[4] = px[c5n]; cm[5] = px[c6n];
+	cm[6] = px[c7n]; cm[7] = px[c8n]; cm[8] = px[c9n];
+	memcpy(pout.map, dmap, sizeof dmap);
+	memcpy(pout.rows, rr, sizeof pout.rows);
+	pout.i416 = indexlim;
+}
 
 #define MAXLIMCHK(A) {if (A < maxindex) {maxindex = A; if (A < indexlim) {	goback = 1; return;}}}
 #define PATS4TO_INT(X,A, B,C, D) {X = 1111;register int r;\
@@ -136,10 +150,14 @@ inline int BMINLEX::Vret() {
 	if (minindex > indexlim) return 1;
 	return 0;
 }
-int BMINLEX::ValidMinlex(int i) {
+int BMINLEX::ValidMinlex(int i, int endmap ) {
 	p_cpt2g[10]++;
 	minindex = maxindex = i;
 	goback = 1;
+	if (endmap) {
+		goback++;
+		EndMapping();
+	}
 	return 1;
 }
 

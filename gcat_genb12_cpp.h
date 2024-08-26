@@ -254,13 +254,18 @@ r6c9:gfree[53] = r6mfree[2] & ~(colband1[8] | gbit[51] | gbit[52]);;
 }
 void GEN_BANDES_12::GoNewBand2() {
 	if (go_back)return;
-
 	// check if band2 stays minimal with auto morphs band1
-	int ir = bandminlex.Getmin(&grid0[27], &pband2, 0);
-	if (ir < 0) return; //would be bug  did not come in enumeration
-	it16_2 = pband2.i416;
-	if (it16_2 < it16) return;// lower band1 
-
+	if(0){
+		int ir = bmlw.GetforMinlex( & grid0[27], it16);
+		if (ir < 0) return;// lower band1 
+	}
+	{
+		int ir = bandminlex.Getmin(&grid0[27], &pband2, 0);
+		if (ir < 0) return; //would be bug  did not come in enumeration
+		it16_2 = pband2.i416;
+		if (it16_2 < it16) return;// lower band1 
+	}	
+	p_cpt2g[31]++;
 
 	// build now the gangster band 3
 	for (int i = 0, j = 27; i < 9; i++, j++)
@@ -411,7 +416,7 @@ inline void GEN_BANDES_12::GoCheckSol() {
 			if (ir < 0) return;
 		}
 	} 
-	if (n_auto_b1 && (it16_2 == it16_3)) { //check perm b2 b3
+	if(0)if (n_auto_b1 && (it16_2 == it16_3)) { //check perm b2 b3
 		for (int imorph = 0; imorph < n_auto_b1; imorph++) {
 			int band[27];//first morph to band 2 min lexical
 			BANDMINLEX::PERM& p = t_auto_b1[imorph];
