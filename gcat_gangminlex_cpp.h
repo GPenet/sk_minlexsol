@@ -35,16 +35,12 @@ struct GANGMINLEX {// receive a band send back i44 and morphing data
 
 	int t2x3[3], t2x3i[3], nt2x3, t2x2[20], t2x2i[20], nt2x2;
 	int dmap[9], cmap[9];
-	int cellmap[27], digitmap[9],igang,colmap[9],stackmap[3],stackmapb[3];
+	int revdmap[9], revcmap[9],revcellmap[27];
+	int cellmap[27], igang;// , stackmap[3], stackmapb[3];
 	int c1n, c2n, c3n, c4n, c5n, c6n, c7n, c8n, c9n;
 	int m1, m2, m3, m4, m5, m6, m7, m8, m9;
 	int m123, m456, m789, m457, m689, m12x,m12;
 	int m45, m89, m67;
-
-	void MappingInit() {
-		for (int i = 0; i < 27; i++) cellmap[i] = i;
-		for (int i = 0; i < 9; i++) digitmap[i] = i;
-	}
 	void SortTcols() {
 		int n = 0;
 		for (int i = 0; i < ntcols; i++)
@@ -71,11 +67,6 @@ struct GANGMINLEX {// receive a band send back i44 and morphing data
 				<< "  stk=" << tcols_stk[i] << endl;
 		}
 
-	}
-	void InitNoMap() {
-		memset(cellmap, 255, sizeof cellmap);
-		memset(colmap, 255, sizeof colmap);
-		memset(digitmap, 255, sizeof digitmap);
 	}
 	void DumpSort() {
 		for (int i = 0; i < 27; i++) cout << g0[i] + 1;
@@ -133,45 +124,8 @@ struct GANGMINLEX {// receive a band send back i44 and morphing data
 
 	int ValidGangMinlex(int i);
 	int CheckMap();
-	void Status();
-	
-	int Checkvalid() {
-		int a = 0, b = 0;
-		for (int i = 0; i < 9; i++) {
-			if (colmap[i] < 0 || digitmap[i] < 0) break;
-			if (colmap[i] >8 || digitmap[i] >8) break;
-			a |=1<<colmap[i] ; b |=1<< digitmap[i];
-		}
-		if (a == 0x1ff && b == 0x1ff) return 1;
-		cout << "invalid or missing in mapping igan="<<igang << endl;
-		for (int i = 0; i < 9; i++) cout << colmap[i] << " ";
-		cout << " columns mapping" << endl;
-		for (int i = 0; i < 9; i++) cout << digitmap[i] << " ";
-		cout << " digits mapping" << endl;
-		igang = -1;
-		return 0;
+	void Status();	
 
-	}
-	int BuildCellMap() {// just colmap to cellmap same rows
-		if (!Checkvalid()) return 0;
-		for (int irow = 0,i=0; irow < 3; irow++) {
-			register int drow = 9 * irow;
-			for (int icol = 0; icol < 9; icol++,i++)
-				cellmap[i] = drow + colmap[icol];
-		}
-		return 1;
-	}
-	void DumpMapping() {
-		for (int i = 0; i < 27; i++) cout << g0[i] + 1;
-		cout << " gangster  studied igang=" << igang << endl;
-		for (int i = 0; i < 27; i++) cout << cellmap[i]<<" ";
-		cout << " cells mapping" << endl;
-		for (int i = 0; i < 9; i++) cout << colmap[i]<<" ";
-		cout << " columns mapping" << endl;
-		for (int i = 0; i < 9; i++) cout << digitmap[i]<<" ";
-		cout << " digits mapping" << endl;
-
-	}	
 	void DumpMappingN() {
 		for (int i = 0; i < 27; i++) cout << g0[i] + 1;
 		cout << " gangster  studied igang=" << igang << endl;
@@ -182,39 +136,17 @@ struct GANGMINLEX {// receive a band send back i44 and morphing data
 		for (int i = 0; i < 9; i++) cout << dmap[i] << " ";
 		cout << " digits mapping" << endl;
 
-	}
-	void Check() {
-		cout << "check mapping igang=" << igang << endl;
+		for (int i = 0; i < 27; i++) cout << revcellmap[i] << " ";
+		cout << " reverse cells mapping" << endl;
+		for (int i = 0; i < 9; i++) cout << revcmap[i] << " ";
+		cout << " reverse columns mapping" << endl;
+		for (int i = 0; i < 9; i++) cout << revdmap[i] << " ";
+		cout << " reverse digits mapping" << endl;
 
-		for (int i = 0; i < 9; i++) {
-			int* gc = &g0[3 * colmap[i]];
-			for (int j = 0; j < 3; j++) {
-				int c = gc[j];
-				cout << digitmap[c] + 1;
-			}
-			cout << " ";
-		}
-		cout << endl;
-
-
-
-		int rdigm[9];
-		for (int i = 0; i < 9; i++) {
-			rdigm[digitmap[i]] = i;
-		}
-		cout << "reverse check" << endl;
-		for (int i = 0; i < 9; i++) cout << rdigm[i] << " ";
-		cout << " digits mapping reverse" << endl;
-
-		for (int i = 0; i < 9; i++)		{
-			int* gc = &g0[3 * colmap[i]];
-			for (int j = 0; j < 3; j++) {
-				int c = gc[j];
-				cout << rdigm[c] + 1;
-			}
-			cout << " ";
-		}
-		cout << endl;
+		for (int i = 0; i < 27; i++) 
+			cout << dmap[g0[cellmap[i]]] + 1;
+		cout << " morphed entry" << endl;
+		
 
 	}
 	void DumpT2x2() {
@@ -253,7 +185,6 @@ struct GANGMINLEX {// receive a band send back i44 and morphing data
 
 	void Go3();
 	void Go5();
-	int Go5b();
 	void Go6();
 	int Go6b();
 	void Go78();
@@ -371,6 +302,21 @@ void GANGMINLEX::Init(int* o, int debugging ) {
 	case 9: Go9(); return;
 	}
 }
+/*
+	}
+		inline void Map_1_1_1(int d0,int v1,int v2,int v3) {
+		int d1, d2, d3;
+		bitscanforward(d1, v1);
+		bitscanforward(d2, v2);
+		bitscanforward(d3, v3);
+		digitmap[d0++] = d1;
+		digitmap[d0++] = d2;
+		digitmap[d0] = d3;
+	}
+	inline void MapC1(int c0, int v) {
+		bitscanforward(colmap[c0], v);
+*/
+
 int GANGMINLEX::ValidGangMinlex(int i) {
 	igang = i;
 	goback = 1;
@@ -383,11 +329,20 @@ int GANGMINLEX::ValidGangMinlex(int i) {
 		bitscanforward(r, m7); dmap[r] = 6; bitscanforward(r, m8); dmap[r] = 7;
 		bitscanforward(r, m9); dmap[r] = 8;
 	}
+	if(0){
+		register int r;
+		bitscanforward(r, m1); dmap[0] = r; bitscanforward(r, m2); dmap[1] = r;
+		bitscanforward(r, m3); dmap[2] = r; bitscanforward(r, m4); dmap[3] = r;
+		bitscanforward(r, m5); dmap[4] = r; bitscanforward(r, m6); dmap[5] = r;
+		bitscanforward(r, m7); dmap[6] = r; bitscanforward(r, m8); dmap[7] = r;
+		bitscanforward(r, m9); dmap[8] = r;
+	}
 	{
 		cmap[0] = c1n; cmap[1] = c2n; cmap[2] = c3n;
 		cmap[3] = c4n; cmap[4] = c5n; cmap[5] = c6n;
 		cmap[6] = c7n; cmap[7] = c8n; cmap[8] = c9n;
 	}
+
 	{// just colmap to cellmap same rows
 		if (!CheckMap()) { Status(); return 2; }
 		for (int irow = 0, i = 0; irow < 3; irow++) {
@@ -395,6 +350,19 @@ int GANGMINLEX::ValidGangMinlex(int i) {
 			for (int icol = 0; icol < 9; icol++, i++)
 				cellmap[i] = drow + cmap[icol];
 		}
+	}
+	// do reverse mapping
+	{
+		for (int i = 0; i < 9; i++) {
+			revcmap[cmap[i]] = i;
+			revdmap[dmap[i]] =i;
+		}
+		for (int irow = 0, i = 0; irow < 3; irow++) {
+			register int drow = 9 * irow;
+			for (int icol = 0; icol < 9; icol++, i++)
+				revcellmap[i] = drow + revcmap[icol];
+		}
+
 	}
 	if (igang < 0) { Status();	DumpMappingN();	}
 	else  p_cpt2g[19]++;// cout << "seen gang" << igang << endl;
@@ -419,7 +387,14 @@ int GANGMINLEX::CheckMap() {
 }
 
 void GANGMINLEX::Status() {
-
+	for (int i = 0; i < 9; i++) {
+		int* w = gb3d[i];
+		for (int j = 0; j < 3; j++) {
+			cout << w[j] + 1;
+		}
+		cout << " ";
+	}
+	cout <<endl;
 	cout << Char9out(m123) << " m123 " << endl;
 	cout << Char9out(m456) << " m456 " << endl;
 	cout << Char9out(m457) << " m457 " << endl;
@@ -627,11 +602,11 @@ gog4: {	//  147 258 369igang=4
 			m4 = x & m456; m7 = x & m789;
 		}
 		else if (x & m2) {// this is 258
-			bitscanforward(c9n, xc);
+			bitscanforward(c8n, xc);
 			m5 = x & m456; m8 = x & m789;
 		}
 		else {// this is 369
-			bitscanforward(c8n, xc);
+			bitscanforward(c9n, xc);
 			m6 = x & m456; m9 = x & m789;
 		}
 	}
@@ -668,7 +643,7 @@ void GANGMINLEX::Go78() {
 	}
 }
 int GANGMINLEX::Go78b() {
-	//got.Dump(); gopa.Dump(); gopb.Dump();
+	if(debug){ got.Dump(); gopa.Dump(); gopb.Dump(); }
 	int st3 = 2 - got.ip, st3d = 3 * st3;
 
 	{
@@ -702,7 +677,7 @@ int GANGMINLEX::Go78b() {
 		}
 	}
 	else {
-		//cout << " cas 14 x " << endl;
+		if(debug)cout << " cas 14 x " << endl;
 		// use number of pairs to split the task
 		if (nt2x2 == 6)goto go145;
 		else if (nt2x2 == 4)goto go146;
@@ -747,8 +722,8 @@ go124: {
 		 if (mc8 & m6) { END89F(7); }//356 789 ig=7
 		else { END8_9F(8); }//	358 679 ig = 8
 	}
+	m5 = mc9 & m45;
 	if (mc8 & m6) {//367 589 ig=9 368 579 ig=10
-		m5 = mc9 & m45;
 		if (mc8 & m7) {	END89F(9);	}
 		else { END8_9F(10); }
 	}

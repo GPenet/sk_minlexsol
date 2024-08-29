@@ -20,7 +20,7 @@ const char * libs_c17_00_cpt2g[100] = {
 	"4 row4 ",	
 	"5 row5  ",
 	"6 goband3 ",
-	"7   ",	"8  ",
+	"7 band2 ok   ",	"8  ",
 	"9 compte band 2 ",
 
 	"10 count hit valid band found ",	"11 ",	"12 ",	"13 ", 	"14 ",
@@ -246,7 +246,7 @@ void Go_c17_31() {// print part of the cat for given rows 4
 			if (j < sgo.vx[0]) { rank += jr4nsol; continue; }
 			genb12.InitRow4FromI10375(jr4index);
 			genb12.s_rank = rank;
-			if (op.ton) {
+			if (op.ton>1) {
 				for (int k = 0; k < 36; k++) cout << genb12.grid0[k] + 1;
 				cout << ";" << i << ";" << j << ";" << rank << ";" << jr4nsol					
 					<< "\t p_cpt2g[9]=" << p_cpt2g[9] << endl;
@@ -490,6 +490,49 @@ void Go_c17_90() {// read index extract first
 
 void Go_c17_91() {// test band3 using gangster
 	cout << "process 91 band3 using template " << endl;
+	const char* tw = "569137248259346178248679135";
+	cout << tw << " bug?? to see" << endl;
+	gangminlex.Initd(tw,1);
+	gangminlex.Status();
+	gangminlex.DumpMappingN();
+	int ig = gangminlex.igang;
+	int istart = tfill_index[ig], iend = tfill_index[ig + 1];
+	cout << "ig found" << ig
+		<< " start end " << istart << " " << iend << " ";// << endl;
+	for (int i = istart; i < iend; i++) {
+		int bd = tfillband[i];
+		const char* cx = t44fills[i];
+		cout << cx << endl;
+		int b3morphed[27];
+		for (int i = 0; i < 9; i++) {
+			int c = gangminlex.revcmap[i];
+			int* m = gangminlex.revdmap;
+			int v = cx[c] - '1';
+			b3morphed[i] = m[cx[c] - '1'];
+			b3morphed[i+9] = m[cx[c+9] - '1'];
+			b3morphed[i + 18] = m[cx[c + 18] - '1'];
+		}
+		BandReOrder(b3morphed);
+		for (int i = 0; i < 27; i++) cout << b3morphed[i] + 1;
+		cout << "  fill to check band " <<bd << endl;
+
+	}
+	/*
+
+	if (op.ton > 1) cout << " seen valid fills " << nokindex << endl;
+	if (!nokindex)return;
+
+	if (nokindex > 1)SortBandsMorphed(nokindex);
+	else tfillorder[0] = 0;
+	for (int i = 0; i < nokindex; i++) {
+		p_cpt2g[7]++;
+		int* myb = tfillbandmorphed[tfillorder[i]];
+		if (op.ton > 1) {
+			for (int i = 0; i < 27; i++) cout<< myb[i]+1;
+			cout << "  fill to check " << p_cpt2g[7] << endl;
+		}*/
+
+	return;
 	for (int ig = 0; ig < 44; ig++) {// 44 gangsters
 		//if (ig < 19) continue;
 		//if (ig !=40) continue;
