@@ -111,7 +111,7 @@ const char * t416[416] = {
 	"7389612986217354",	"7389621896127345",	"7389621896217354",	"7389621986127354",
 	"7893612896127345", "7893612896127354", "7893612896217354", "7893612986217354",
 };
- BANDMINLEX::PERM automorphsp[519] = {
+ BANDPERM automorphsp[519] = {
 {0,{0,1,2},{0,2,1,3,5,4,6,8,7},{0,2,1,3,5,4,6,8,7}},
 {0,{0,1,2},{1,0,2,4,3,5,7,6,8},{1,0,2,4,3,5,7,6,8}},
 {0,{0,1,2},{2,0,1,5,3,4,8,6,7},{1,2,0,4,5,3,7,8,6}},
@@ -769,7 +769,7 @@ void BANDMINLEX::SetPout(int iret){
 
 }
 
-int BANDMINLEX::Getmin(int * b0,PERM * pout_user,int ediag){
+int BANDMINLEX::Getmin(int * b0,BANDPERM * pout_user,int ediag){
 	diag = 0;
 	band0 = b0;
 	pout = pout_user;
@@ -1132,7 +1132,7 @@ int BANDMINLEX::Getmin7_Switch (){// this is a 123456789 457 mode morphed ok
 	return 0;
 }
 
-int BANDMINLEX::GetAutoMorphs(int ei416, PERM * tpout){// find automorphism for a band
+int BANDMINLEX::GetAutoMorphs(int ei416, BANDPERM * tpout){// find automorphism for a band
 	int band[27] = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 3, 4 };// band in 0 mode
 	int nperm = 0;
 	const char * tt = t416[ei416];
@@ -1171,7 +1171,7 @@ int BANDMINLEX::GetAutoMorphs(int ei416, PERM * tpout){// find automorphism for 
 					}
 				}
 				{
-					PERM & p = tpout[nperm++];
+					BANDPERM & p = tpout[nperm++];
 					memcpy(p.rows, rrx, sizeof p.rows);
 					memcpy(p.cols, cols, sizeof cols);
 					memcpy(p.map, map, sizeof map);

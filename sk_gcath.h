@@ -30,9 +30,7 @@ struct OPCOMMAND {// decoding command line option for this rpocess
 }op;
 
 
-
 //____ entry builder
-void BandReShape(int* s, int* d, BANDMINLEX::PERM p);
 void BandReOrder(int* d);
 struct GEN_BANDES_12 {// encapsulating global data 
 	int modeb12, go_back, diagmore, diagbug, 
@@ -45,7 +43,7 @@ struct GEN_BANDES_12 {// encapsulating global data
 	int zsa[27], zsb[27], zsmin[81];
 
 //	uint64_t   nb12;
-	BANDMINLEX::PERM *t_auto_b1, * t_auto_p1,// maxi is 107
+	BANDPERM *t_auto_b1, * t_auto_p1,// maxi is 107
 		t_auto_b1b2[108], t_auto_b2b1[108], t_auto_b1r4[108], t_auto_b1r4r5[108],
 		pband2, pband3;
 	int n_auto_b1, n_auto_p1, n_auto_b1b2, n_auto_b2b1,
@@ -68,7 +66,7 @@ struct GEN_BANDES_12 {// encapsulating global data
 	}
 	struct TWW {
 		int zs0[81], zs0b[81], zsa[27],zsb[27], zs1[81], ib[3], *zco;
-		BANDMINLEX::PERM perm_ret;
+		BANDPERM perm_ret;
 		void PutBandFirst(int i1) {
 			if (!i1)return;
 			int temp[27];
@@ -96,9 +94,9 @@ struct GEN_BANDES_12 {// encapsulating global data
 			if (ib[2] < ib[1])PermB(  1, 2);
 		}
 		void MorphToB1() {
-			BandReShape(zs0, zs1, perm_ret);
-			BandReShape(&zs0[27], &zs1[27], perm_ret);
-			BandReShape(&zs0[54], &zs1[54], perm_ret);
+			perm_ret.MorphOrdered(zs0, zs1);
+			perm_ret.MorphOrdered(&zs0[27], &zs1[27]);
+			perm_ret.MorphOrdered(& zs0[54], & zs1[54]);
 		}
 		void MorphToB1First() {
 			bandminlex.Getmin(zs0, &perm_ret);
@@ -107,7 +105,7 @@ struct GEN_BANDES_12 {// encapsulating global data
 		}
 
 
-		void InitAndMorph(int* zo, BANDMINLEX::PERM& p,int first) {
+		void InitAndMorph(int* zo, BANDPERM& p,int first) {
 			memcpy(zs0, zo, sizeof zs0);
 			PutBandFirst(first);
 			perm_ret = p;
@@ -123,9 +121,9 @@ struct GEN_BANDES_12 {// encapsulating global data
 			memcpy(&zs0b[27 * first], zs0, sizeof temp);
 			memcpy(zs0b, temp, sizeof temp);
 			bandminlex.Getmin(zs0b, &perm_ret);
-			BandReShape(zs0b, zs1, perm_ret);
-			BandReShape(&zs0b[27], &zs1[27], perm_ret);
-			BandReShape(&zs0b[54], &zs1[54], perm_ret);
+			perm_ret.MorphOrdered(zs0b, zs1);
+			perm_ret.MorphOrdered(&zs0b[27], &zs1[27]);
+			perm_ret.MorphOrdered(&zs0b[54], &zs1[54]);
 			if (zs1[27] != 1) {// put band 2 band 3 in the right order
 				memcpy(temp, &zs1[27 ], sizeof temp);
 				memcpy(&zs1[27],&zs1[54], sizeof temp);

@@ -42,8 +42,8 @@ void Go_0() {
 		strcpy(&zn[ll], "_file1.txt");
 		fout1.open(zn);
 	}
-	int need_input_file[2] = { 20,90 },need=0;
-	for(int i=0;i<1;i++)
+	int need_input_file[3] = { 20,90,94 },need=0;
+	for(int i=0;i<3;i++)
 		if (sgo.command == need_input_file[i]) { need = 1; break; }
 	if (need){// input file expected
 		if (!sgo.finput_name) {
@@ -68,6 +68,7 @@ void Go_0() {
 	case 91: Go_c17_91(); break; // band 3 templates on gangster
 	case 92: Go_c17_92(); break; // band 3 templates on gangster
 	case 93: Go_c17_93(); break; // band 1 30 premiers
+	case 94: Go_c17_94(); break; // band 1 file to test
 
 	}
 	cerr << "go_0 return" << endl;

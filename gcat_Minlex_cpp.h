@@ -13,29 +13,7 @@ int bminlex_tindex[50] = {
 	409, 411,						//45_ 362 89 98
 	412,415,416						//47_861_862 
 };
-struct BANDPERM {
-	int i416;
-	int rows[3], cols[9], map[9];
-	inline void InitBase(int i16 = 0) {
-		i416 = i16;
-		for (int i = 0; i < 9; i++)		cols[i] = map[i] = i;
-		for (int i = 0; i < 3; i++)		rows[i] = i;
-	}
-	void MorphOrdered(int* a,int* b) {
 
-	}
-
-	void Dump() {
-		cout << "perm status i416=" << i416 << endl;
-		cout << "rows " << rows[0] << rows[1] << rows[2] << endl;
-		cout << "cols " << cols[0] << cols[1] << cols[2]
-			<< cols[3] << cols[4] << cols[5] << cols[6]
-			<< cols[7] << cols[8] << endl;
-		cout << "digs " << map[0] << map[1] << map[2]
-			<< map[3] << map[4] << map[5] << map[6]
-			<< map[7] << map[8] << endl;
-	}
-};
 struct BMINLEX {// receive a band send back i416 and morphing data
 	int minirows[9], minicols[9], cx[9], minirr[9];
 	int* minir0[3], * minic0[3],*minird[3];
@@ -43,6 +21,7 @@ struct BMINLEX {// receive a band send back i416 and morphing data
 		minir0[0] = minirows; minir0[1] = &minirows[3]; minir0[2] = &minirows[6];
 		minic0[0] = minicols; minic0[1] = &minicols[3]; minic0[2] = &minicols[6];
 	}
+	int debug;
 	BANDPERM pout;
 	int* b0;
 	int	indexlim,minindex,maxindex,  goback,  maxret,indexret,bindex;
@@ -58,10 +37,11 @@ struct BMINLEX {// receive a band send back i416 and morphing data
 	int* ss, s1, s2, s3, m123, m456, m789, m457, m689, mx89;
 	int m45, m89, mx, m12;
 	int r2c7, r2c8, ir2c4, ir2c7,r3c1,r3c2;
+	void InitMiniCols();
+	void Init(int* grid, int lim,int debugging=0) ;
 
-	void Init(int* grid, int lim) ;
 	void I457end();
-	void DumpInit(int ib = 0) ;
+	void DumpInit() ;
 	int SetMinMax(int min, int max) ;
 	inline void MapDigits();
 	inline void EndMapping();
@@ -76,10 +56,11 @@ struct BMINLEX {// receive a band send back i416 and morphing data
 	int ValidMinlex(int i,int endmap=1);
 	inline int Vret();
 
-	int GetforMinlex(int* grid, int myb1);
+	int GetforMinlex(int* grid, int myb1, int debugging = 0);
 
 	int SetupRSC_A() ;
 	void GoMinlex_0_30() ;
+	void DoMapping1();
 	void GoA_case6();
 	void GoA_case71();
 	void GoA_case70() ;
@@ -120,13 +101,13 @@ inline void  BMINLEX::MapDigits()
 }
 inline void  BMINLEX::EndMapping()
 {
-	int* cm = pout.cols;
-	cm[0] = px[c1n]; cm[1] = px[c2n]; cm[2] = px[c3n];
+	register int* cm = pout.cols;
+	cm[0] = px[c1n]; cm[1] =px[c2n]; cm[2] = px[c3n];
 	cm[3] = px[c4n]; cm[4] = px[c5n]; cm[5] = px[c6n];
 	cm[6] = px[c7n]; cm[7] = px[c8n]; cm[8] = px[c9n];
 	memcpy(pout.map, dmap, sizeof dmap);
-	memcpy(pout.rows, rr, sizeof pout.rows);
-	pout.i416 = indexlim;
+	memcpy(pout.rows, rr, 12);
+	pout.i416 = minindex;
 }
 
 #define MAXLIMCHK(A) {if (A < maxindex) {maxindex = A; if (A < indexlim) {	goback = 1; return;}}}
@@ -139,9 +120,9 @@ inline void  BMINLEX::EndMapping()
 #define GOGO1(M,N,G) if (SetMinMax(M,N)) return; I457end(); G; if (goback) return;break
 
 
-int BMINLEX::GetforMinlex(int* grid, int myb1) {
-	Init(grid, myb1);
-	//if (goback)return Vret();
+int BMINLEX::GetforMinlex(int* grid, int myb1, int debugging ) {
+	Init(grid, myb1,debugging);
+	if (debugging)cout << " exit min max " << minindex << " " << maxindex << endl;
 	return Vret();
 }
 
@@ -160,11 +141,26 @@ int BMINLEX::ValidMinlex(int i, int endmap ) {
 	}
 	return 1;
 }
+void  BMINLEX::InitMiniCols() {
+	{
+		minicols[0] = tbit9[b0[0]] | tbit9[b0[9]] | tbit9[b0[18]];
+		minicols[1] = tbit9[b0[1]] | tbit9[b0[10]] | tbit9[b0[19]];
+		minicols[2] = tbit9[b0[2]] | tbit9[b0[11]] | tbit9[b0[20]];
+		minicols[3] = tbit9[b0[3]] | tbit9[b0[12]] | tbit9[b0[21]];
+		minicols[4] = tbit9[b0[4]] | tbit9[b0[13]] | tbit9[b0[22]];
+		minicols[5] = tbit9[b0[5]] | tbit9[b0[14]] | tbit9[b0[23]];
+		minicols[6] = tbit9[b0[6]] | tbit9[b0[15]] | tbit9[b0[24]];
+		minicols[7] = tbit9[b0[7]] | tbit9[b0[16]] | tbit9[b0[25]];
+		minicols[8] = tbit9[b0[8]] | tbit9[b0[17]] | tbit9[b0[26]];
 
-void BMINLEX::Init(int* grid, int lim) {
+	}
+}
+
+void BMINLEX::Init(int* grid, int lim, int debugging) {
 	goback = 0;// to stop at the first hit or over limit
 	indexlim = lim;
-	//cout << "lim=" << lim << endl;
+	debug = debugging;
+	if (debug)cout << "lim=" << lim << endl;
 	b0 = grid;
 	{// try 0_30 31_415
 		minirows[0] = tbit9[grid[0]] | tbit9[grid[1]] | tbit9[grid[2]];
@@ -190,40 +186,32 @@ void BMINLEX::Init(int* grid, int lim) {
 			minirows[8] = tbit9[grid[24]] | tbit9[grid[25]] | tbit9[grid[26]];
 		}
 	}
-	{
-		minicols[0] = tbit9[grid[0]] | tbit9[grid[9]] | tbit9[grid[18]];
-		minicols[1] = tbit9[grid[1]] | tbit9[grid[10]] | tbit9[grid[19]];
-		minicols[2] = tbit9[grid[2]] | tbit9[grid[11]] | tbit9[grid[20]];
-		minicols[3] = tbit9[grid[3]] | tbit9[grid[12]] | tbit9[grid[21]];
-		minicols[4] = tbit9[grid[4]] | tbit9[grid[13]] | tbit9[grid[22]];
-		minicols[5] = tbit9[grid[5]] | tbit9[grid[14]] | tbit9[grid[23]];
-		minicols[6] = tbit9[grid[6]] | tbit9[grid[15]] | tbit9[grid[24]];
-		minicols[7] = tbit9[grid[7]] | tbit9[grid[16]] | tbit9[grid[25]];
-		minicols[8] = tbit9[grid[8]] | tbit9[grid[17]] | tbit9[grid[26]];
+	if (debug) cout << "try min max " << minindex << " " << maxindex << endl;
 
-	}
+	InitMiniCols();
 	int vr;// for the case 7cols with triplet
 	{// setup the column count
 		nxcols = 1, cx[9];
 		cx[0] = minicols[0];
 		register int i, j;
-		for ( i = 1; i < 9; i++) {
+		for (i = 1; i < 9; i++) {
 			register int v = minicols[i];
 			for (j = 0; j < nxcols; j++) {
 				if (v == cx[j]) { vr = v; v = 0; break; }
 			}
-			if (v)  cx[nxcols++] = v; 
+			if (v)  cx[nxcols++] = v;
 		}
 	}
 	if (nxcols == 7) {// need the count of triplets
-		register int vt = vr, n = 0,i;
+		register int vt = vr, n = 0, i;
 		for (i = 0; i < 9; i++)if (vt == minicols[i])n++;
-		if(n==3)nx3=1; else nx3=0;
+		if (n == 3)nx3 = 1; else nx3 = 0;
 	}
 
 	// 7  2 cases triplet or 2 pairs
 	if (!minindex)GoMinlex_0_30(); // block 0-30   456 in minirow 4			
 	else {// Block 457 in minirow 4
+
 		if (SetMinMax(31, 415)) return;
 
 		int smaller_r2c4 = 8;
@@ -231,6 +219,7 @@ void BMINLEX::Init(int* grid, int lim) {
 		for (ipr = 0; ipr < 6; ipr++) {// 6 pairs rows
 			{
 				register int* p = tpermgang[ipr];
+				rr = p;
 				minird[0] = minir0[p[0]];
 				minird[1] = minir0[p[1]];
 				minird[2] = minir0[p[2]];
@@ -238,6 +227,7 @@ void BMINLEX::Init(int* grid, int lim) {
 			for (ipst = 0; ipst < 6; ipst++) {// 6 pairs stacks
 				{
 					register int* pc = tpermgang[ipst];
+					px = tpermg9stk[ipst];
 					// check validity of the perm
 					{
 						register int r1 = minird[0][pc[1]],
@@ -262,6 +252,13 @@ void BMINLEX::Init(int* grid, int lim) {
 						memcpy(&cx[6], rc, 12);
 					}
 				}
+				if (debug) {
+					cout << "try perm" << ipr << ipst
+						<< " min max "<< minindex <<" "<< maxindex << endl;
+					if (0){
+						for (int i = 0; i < 9; i++)cout << Char9out(cx[i]) << " cx i=" << i << endl;
+					}
+				}
 				// Find the 1,2,3 in mini row 4
 				{ // get c6 get c3 get c4 get c1,2
 					register int i, m = m6;
@@ -271,9 +268,15 @@ void BMINLEX::Init(int* grid, int lim) {
 						else if (m & cx[4])i = 4;
 						else i = 5;
 						c6n = i;  mc6 = cx[i];
+						if (debug) {
+							cout << Char9out(m6) << " m6" << endl;
+							cout << Char9out(mc6) << " mc6 6n=" << c6n << endl;
+						}
+
+
 						if (mx & mc6) {
 							if (smaller_r2c4 < 8) continue;
-							T412p(); if(goback) return;
+							T412p(); if(goback) return ;
 							continue;
 						}
 
@@ -352,7 +355,11 @@ void BMINLEX::Init(int* grid, int lim) {
 						}
 					}
 				}
-				if (goback) return;
+				if (goback) {
+					cout << " exit seen" << endl;
+					if (debug)Status(1);
+					return;
+				}
 			}// end ipst
 			if (goback) return;
 		}// end ipr		
@@ -409,9 +416,10 @@ void BMINLEX::I457end() {
 
 
 
-void BMINLEX::DumpInit(int ib) {
+void BMINLEX::DumpInit() {
 	for (int i = 0; i < 27; i++) cout << b0[i] + 1;
-	cout << " band index" << ib << " minirows" << endl;;
+	cout << "nxcols=" << nxcols << endl;
+	cout  << " minirows" << endl;;
 	for (int ir = 0, i = 0; ir < 3; ir++) {
 		for (int j = 0; j < 3; j++, i++)
 			cout << Char9out(minirows[i]) << "_";
@@ -637,14 +645,107 @@ int BMINLEX::SetupRSC_A() {
 void BMINLEX::GoMinlex_0_30() {
 	p_cpt2g[30]++;
 	if (SetMinMax(0, 30)) return;
-	//cout << "GoMinlex_0_30()" << endl;
+	px = tpermg9stk[0];// default value
+	if(debug)cout << "GoMinlex_0_30() ncols "<< nxcols << endl;
 	if (nxcols > 5) SetupRSC_A();
-	else switch (nxcols) {
-	case 3:ValidMinlex(0); return;//	cout << " band 0" << endl; return;
-	case 5:ValidMinlex(1); return;//	cout << " band 1" << endl; return;
+	else {
+		switch (nxcols) {
+		case 3: {
+			p_cpt2g[10]++;
+			minindex = maxindex = 0;
+			goback = 1;
+			if (!indexlim) {// must do mapping
+				pout.InitBase(0);
+				for (int i = 0; i < 9; i++)
+					pout.map[b0[i]] = i;
+			}
+			return;
+		}
+		case 5: {
+			p_cpt2g[10]++;
+			minindex = maxindex = 1;
+			goback = 1;
+			if (indexlim == 1) DoMapping1();
+			return;
+		}
+		}
 	}
 
 }
+
+void BMINLEX::DoMapping1() {
+	//123 456 789  
+	//456 789 123  
+	//789 123 465 5 1 2
+	pout.InitBase(1);
+	for (int i = 0; i < 9; i++)// init to morph on columns
+		pout.map[i] = i;
+	// find the columns analysing the 5 cx
+	int cxn[5], cxvn[5][3], cxt, cxp[2], cx1[2];
+	{
+		int np = 0,n1=0;
+		for (int i = 0; i < 5; i++) {
+			int* vn = cxvn[i];
+			register int r = cx[i],n=0;
+			for (int j = 0; j < 9; j++) {
+				if (minicols[j] == r)
+					vn[n++] = j;
+			}
+			cxn[i] = n;
+			if (n == 2)cxp[np++] = i;
+			else if (n == 3)cxt = i;
+			else cx1[n1++] = i;
+		}
+
+	}
+	int st1, st2, st3,cxvt[3];// get stacks
+	{
+		register int* y = cxvn[cxp[0]];// first pair
+		st1 = y[0] / 3; st2 = y[1] / 3;
+		y = cxvn[cx1[0]];// first single
+		st3 = y[0] / 3;
+	}
+	// now assign the triplet in stack order
+	// assign the pairs in entry order
+	{
+		register int* y = pout.cols,* w=cxvn[cxt];
+		switch (st3) {
+		case 2: y[0] = w[0]; y[3] = w[1]; y[6] = w[2]; break;
+		case 1: y[0] = w[0]; y[3] = w[2]; y[6] = w[1]; break;
+		case 0: y[0] = w[2]; y[3] = w[0]; y[6] = w[1]; break;
+		}
+		w = cxvn[cxp[0]]; y[1] = w[0]; y[4] = w[1];
+		w = cxvn[cxp[1]]; y[2] = w[0]; y[5] = w[1];
+	}
+	// align singles on pairs 2 common digits
+	{
+		int ia = cx1[0], ib = cx1[1],
+			cxa = cx[ia], cxr=cx[cxp[0]],
+			ca = cxvn[ia][0], cb = cxvn[ib][0];
+		if (_popcnt32(cxr & cxa) == 2) {
+			pout.cols[7] = ca; pout.cols[8] = cb;
+		}
+		else {
+			pout.cols[7] = cb; pout.cols[8] = ca;
+		}
+	}
+	// take common digits columns 3 and 9
+	// ad third digit column 9
+	int x8 = cx[pout.cols[8]],
+		xc = cx[pout.cols[2]] & x8, x = x8 & ~xc,xn;
+	bitscanforward(xn, x);
+	cout << Char9out(x8) << " x8" << endl;
+	cout << Char9out(xc) << " xc xn="<<xn <<" must be 3" << endl;
+	pout.Dump();
+	int bn[27];
+	pout.Morph(b0, bn);
+	BandDump(bn, " morphed to new columns");
+//	for (int i = 0; i < 9; i++)// init to morph on columns
+//		pout.map[b0[i]] = i;
+
+}
+
+
 uint32_t tmin6_c6v[3] = { 12781256,13781254,23781264 };
 uint32_t tmin6_c6i[3] = { 2,17,26 };
 
@@ -756,10 +857,11 @@ void BMINLEX::GoB_case6(){
 uint32_t tmin_c71v[7] = {132683215,132683245,162683215,162687215,162687245,162983215,162983245};
 uint32_t tmin_c71i[7] = { 223,224,246,251,253,304,306 };
 void BMINLEX::GoB_case71() {
+	if (debug)cout << "GoB_case71() "  << endl;
 	int ir = GetCrit9(tmin_c71v, critcomp, 0, 7);
 	if (ir < 0) return;
 	ValidMinlex(tmin_c71i[ir]);
-	//cout << "band is there " << tmin_c71i[ir] << endl;
+	if(debug)cout << "band is there " << tmin_c71i[ir] << endl;
 	if (goback) return;;
 }
 
@@ -967,24 +1069,33 @@ void BMINLEX::GoB_case9_2_go() {
 	986 217 354 _   415    	7 1 0
 */
 void BMINLEX::T412p() {
+	if (debug)cout << "T412p() nxcols=" << nxcols << endl;
 	if (nxcols == 3) {	Go_412(); return;	}
 	if (nxcols == 5) { Go_413(); return; }
-	if (nxcols != 7) return;	if(nx3!=1)return;
+	if (nxcols != 7) return;	
+	if(nx3!=1)return;// column 367 3 times
 	Go_414_415();	
 }
 void BMINLEX::Go_412() {// mapping if 
-	if (indexlim != 412) return;
-	//cout << "this is band 412" << endl;
+	if (debug)cout << "this is band 412" << endl;
+	if (indexlim != 412)	{
+		maxindex = minindex = 412; goback = 1;	return;
+	}
+	// mapping to do <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 	ValidMinlex(412);
 }
 void BMINLEX::Go_413() {//mapping if
-	if (indexlim != 413) return;
-	//cout << "this is band 413" << endl;
+	if (debug)cout << "this is band 413" << endl;
+	if (indexlim != 413) {
+		maxindex = minindex =  413;	 goback = 1; return;	}
+	// mapping to do <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 	ValidMinlex(413);
 
 }
 void BMINLEX::Go_414_415() {//mapping if
-	if (indexlim < 414) return;
+	if (indexlim < 414) {	return;	}
+	//cout << "Go_414_415() " << endl;
+	//DumpInit();
 	// get c3 m using m7  then c1 c2 m4 m5
 	register int i, m = m7;
 	{
@@ -1014,8 +1125,10 @@ void BMINLEX::Go_414_415() {//mapping if
 	}
 	if (!(mc7 & m6)) return; if (!(mc7 & m3)) return;
 	if (!(mc8 & m1)) return; if (!(mc8 & m5)) return;
+
 	MapDigits();
-	//ir2c4 = 8;	Status(1);	
+	//ir2c4 = 8;	
+	//Status(1);	
 	if (mc1 & m8) {
 		//cout << "this is band 414"  << endl;
 		ValidMinlex(414);
@@ -1023,6 +1136,7 @@ void BMINLEX::Go_414_415() {//mapping if
 	else {
 		//cout << "this is band 415" << endl;
 		ValidMinlex(415);
+		//cout << " back minlex" << endl;
 	}
 }
 

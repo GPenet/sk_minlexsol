@@ -24,7 +24,7 @@ void GEN_BANDES_12::NewBand1(int iw) {
 #define CELLGO(N,G,R) 		while (gfree[N]) { \
 bitscanforward(grid0[N], gfree[N]);gbit[N] = 1 << grid0[N]; \
 gfree[N] ^= gbit[N];goto G;}goto R;
-inline int CompRow(BANDMINLEX::PERM& p, int* ra, int* rb) {
+inline int CompRow(BANDPERM& p, int* ra, int* rb) {
 	for (int i = 0; i < 9; i++) {// morph r5 < R4 ?
 		int v = p.map[ra[p.cols[i]]];
 		if (v < rb[i])return -1;
@@ -32,7 +32,7 @@ inline int CompRow(BANDMINLEX::PERM& p, int* ra, int* rb) {
 	}
 	return 0; // equal
 }
-inline void MorphRow(BANDMINLEX::PERM& p, int* ra, int* rb) {
+inline void MorphRow(BANDPERM& p, int* ra, int* rb) {
 	for (int i = 0; i < 9; i++)  rb[i] = p.map[ra[p.cols[i]]];
 }
 
@@ -186,7 +186,7 @@ void GEN_BANDES_12::GoRow6() {
 	if (n_auto_b1) {
 		n_auto_b1r4r5 = 0;
 		for (int imorph = 0; imorph < n_auto_b1; imorph++) {
-			BANDMINLEX::PERM& p = t_auto_b1[imorph];
+			BANDPERM& p = t_auto_b1[imorph];
 			int ir = CompRow(p, &grid0[36], &grid0[27]);
 			if (ir < 0) return;			if (ir) continue;
 			// r4 eq r5 morph si if r4morph < r5
@@ -195,7 +195,7 @@ void GEN_BANDES_12::GoRow6() {
 			if(!ir)t_auto_b1r4r5[n_auto_b1r4r5++] = p;
 		}
 		for (int imorph = 0; imorph < n_auto_b1r4; imorph++) {
-			BANDMINLEX::PERM& p = t_auto_b1r4[imorph];
+			BANDPERM& p = t_auto_b1r4[imorph];
 			int ir = CompRow(p, &grid0[36], &grid0[36]);// r5 =>r5
 			if (ir < 0) return;		
 			if (!ir)  t_auto_b1r4r5[n_auto_b1r4r5++] = p;			
@@ -253,18 +253,46 @@ r6c9:gfree[53] = r6mfree[2] & ~(colband1[8] | gbit[51] | gbit[52]);;
 	goto r5c8l;
 }
 void GEN_BANDES_12::GoNewBand2() {
+	int locdiag = 0;
+	//locdiag = 1;
+	if (p_cpt2g[31] <100 &&it16==0)locdiag = 1;
 	if (go_back)return;
 	// check if band2 stays minimal with auto morphs band1
-	if(0){
-		int ir = bmlw.GetforMinlex( & grid0[27], it16);
-		if (ir < 0) return;// lower band1 
-	}
 	{
+		if (locdiag) {
+			bandminlex.Getmin(&grid0[27], &pband2, 0);
+			it16_2 = pband2.i416;
+			for (int i = 27; i < 54; i++) cout << grid0[i] + 1;
+			cout << " newb2= " << bmlw.minindex << " " << it16_2 << " p_cpt2g[31]" << p_cpt2g[31] << endl;
+		}
+		int ir = bmlw.GetforMinlex( & grid0[27], it16,0);
+		if (locdiag) cout << " ir=" << ir << endl;
+		if (ir < 0) return;// lower band1 
+		if (!ir) {
+			it16_2 = bmlw.minindex;
+			//bandminlex.Getmin(&grid0[27], &pband2, 0);
+			//for (int i = 27; i < 54; i++) cout << grid0[i] + 1;
+			//cout << " newb2= " << bmlw.minindex << " " << it16_2 << " p_cpt2g[31]" << p_cpt2g[31] << endl;
+			//pband2.Dump();
+			pband2 = bmlw.pout;
+			//pband2.Dump();
+			//int b[27];
+			//pband2.MorphOrdered(&grid0[27], b);
+			//BandDump(b, " b2 morphed");
+			//int ret = BandCompare(&grid0[27], b);
+			//cout << " iret=" << ret << endl;
+		}
+		else it16_2 = 500;
+
+	}
+	if (0) {
 		int ir = bandminlex.Getmin(&grid0[27], &pband2, 0);
 		if (ir < 0) return; //would be bug  did not come in enumeration
 		it16_2 = pband2.i416;
 		if (it16_2 < it16) return;// lower band1 
-	}	
+		//cout << " newb2= " << it16_2 << " p_cpt2g[31]" << p_cpt2g[31] << endl;
+	}
+
 	p_cpt2g[31]++;
 
 	// build now the gangster band 3
@@ -276,9 +304,9 @@ void GEN_BANDES_12::GoNewBand2() {
 	n_auto_b1b2 = n_auto_b2b1 = 0;
 	if (n_auto_b1) {
 		for (int imorph = 0; imorph < n_auto_b1; imorph++) {
-			BANDMINLEX::PERM& p = t_auto_b1[imorph];
+			BANDPERM& p = t_auto_b1[imorph];
 			int band[27];
-			BandReShape(&grid0[27], band, p);
+			p.MorphOrdered(&grid0[27], band);
 			int ir = BandCompare(band, &grid0[27]);
 			if (ir < 0) return;			
 			if (!ir)  t_auto_b1b2[n_auto_b1b2++] = p;
@@ -296,8 +324,8 @@ int GEN_BANDES_12::TWW::BelowB1b2() {
 	if (ir<0) return 1;
 	if (!ir) genb12.t_auto_b2b1 [ genb12.n_auto_b2b1++]= genb12.pband2;
 	for (int imorph = 0; imorph < genb12.n_auto_b1; imorph++) {
-		BANDMINLEX::PERM& p = genb12.t_auto_b1[imorph];
-		BandReShape(&zs0[27], zsa, p);
+		BANDPERM& p = genb12.t_auto_b1[imorph];
+		p.MorphOrdered(&zs0[27], zsa);
 		ir = BelowCompB1b2();
 		if (ir<0) return 1;
 		if (!ir)genb12.t_auto_b2b1[genb12.n_auto_b2b1++] = p;
@@ -377,7 +405,7 @@ void GEN_BANDES_12::GoB2GangsterAnalysis() {
 		{
 			int gd[81];
 			for (int i = 0; i < 81; i++)gd[i] = grid0[C_transpose_d[i]];
-			BANDMINLEX::PERM perm_ret;
+			BANDPERM perm_ret;
 			bandminlex.Getmin(gd, &perm_ret);
 			idt16[0] = perm_ret.i416;
 			if (idt16[0] < it16) continue; //no minimal here
@@ -401,22 +429,22 @@ inline void GEN_BANDES_12::GoCheckSol() {
 	if (go_back)return;
 	if (n_auto_b1) {
 		for (int imorph = 0; imorph < n_auto_b1; imorph++) {
-			BANDMINLEX::PERM& p = t_auto_b1[imorph];
+			BANDPERM& p = t_auto_b1[imorph];
 			int band[27];
-			BandReShape(&grid0[54], band, p);
+			p.MorphOrdered(&grid0[54], band);
 			int ir = BandCompare(band, &grid0[27]);
 			if (ir < 0) return; if (ir)continue;
 			//cout << "equal b3 morph b2 see reverse" << endl;
 			// if band2 morph < band3 this is not a min lex
-			BandReShape(&grid0[27], band, p);
+			p.MorphOrdered(&grid0[27], band);
 			ir = BandCompare(band, &grid0[54]);
 			if (ir < 0) return;
 		}
 		if (n_auto_b1b2) {
 			for (int imorph = 0; imorph < n_auto_b1b2; imorph++) {
-				BANDMINLEX::PERM& p = t_auto_b1b2[imorph];
+				BANDPERM& p = t_auto_b1b2[imorph];
 				int band[27];
-				BandReShape(&grid0[54], band, p);
+				p.MorphOrdered(&grid0[54], band);
 				int ir = BandCompare(band, &grid0[54]);
 				if (ir < 0) return;
 			}
@@ -424,28 +452,15 @@ inline void GEN_BANDES_12::GoCheckSol() {
 	}
 	if (n_auto_b2b1) {
 		int b3w[27], band[27];//first morph to band 2 min lexical
-		BandReShape(&grid0[54], b3w, pband2);
+		pband2.MorphOrdered(&grid0[54], b3w);
 		for (int imorph = 0; imorph < n_auto_b2b1; imorph++) {
-			BANDMINLEX::PERM& p = t_auto_b2b1[imorph];
-			BandReShape(b3w, band, p);
+			BANDPERM& p = t_auto_b2b1[imorph];
+			p.MorphOrdered(b3w, band);
 			int ir = BandCompare(band, &grid0[54]);
 			if (ir < 0) return;
 		}
 	} 
-	//if(0)
-		if (n_auto_b1 && (it16_2 == it16_3)) { //check perm b2 b3
-		for (int imorph = 0; imorph < n_auto_b1; imorph++) {
-			int band[27];//first morph to band 2 min lexical
-			BANDMINLEX::PERM& p = t_auto_b1[imorph];
-			BandReShape(&grid0[54], band, p);// could be lower ??
-			int ir = BandCompare(band, &grid0[27]);
-			if (ir < 0) return; if (ir) continue;
-			// now b2 morph agains b3
-			BandReShape(&grid0[27], band, p);// could be lower ??
-			ir = BandCompare(band, &grid0[54]);
-			if (ir < 0) return;
-		}
-	}
+
 	if (it16 == it16_2) {//  try band 2 first
 		tww.InitAndMorph(grid0, pband2, 1); // init and morph band 2 first
 		if (tww.Below()) return;
@@ -467,7 +482,7 @@ inline void GEN_BANDES_12::GoCheckDiagonal() {
 	int gdiag[81];	// now check diagonal
 	for (int i = 0; i < 81; i++)gdiag[i] = grid0[C_transpose_d[i]];
 	for (int i = 0; i < 3; i++)	if (idt16[i] == it16) {
-		BANDMINLEX::PERM p;
+		BANDPERM p;
 		bandminlex.Getmin(&gdiag[27 * i], &p);
 		tww.InitAndMorph(gdiag, p, i); // init and morph band 3 first
 		if (tww.Below()) return;
@@ -480,9 +495,9 @@ int GEN_BANDES_12::TWW::Below() {
 	memcpy(zsb, &zs0[54], sizeof zsb);
 	if (BelowComp()) return 1;
 	for (int imorph = 0; imorph < genb12.n_auto_b1; imorph++) {
-		BANDMINLEX::PERM& p = genb12.t_auto_b1[imorph];
-		BandReShape(&zs0[27], zsa, p); 
-		BandReShape(&zs0[54], zsb, p); 
+		BANDPERM& p = genb12.t_auto_b1[imorph];
+		p.MorphOrdered(&zs0[27], zsa);
+		p.MorphOrdered(&zs0[54], zsb);
 		if (BelowComp()) return 1;
 	}
 	return 0;
@@ -599,7 +614,7 @@ void GEN_BANDES_12::GoSolForRank() {
 	GoRow5();
 }
 int GEN_BANDES_12::FindRankForSolMin() {
-	BANDMINLEX::PERM perm_ret;
+	BANDPERM perm_ret;
 	if (bandminlex.Getmin(s_grid0, &perm_ret)<0) return -1;
 	s_band= perm_ret.i416;
 	if (op.opcode == 11) cout << "band get id 0-415=" << s_band << endl;
@@ -656,9 +671,9 @@ void GEN_BANDES_12::CompUpdateZmin() {
 }
 void GEN_BANDES_12::ZminSeeMorphs(int* o) {
 	for (int imorph = 0; imorph < n_auto_b1; imorph++) {
-		BANDMINLEX::PERM& p = t_auto_b1[imorph];
-		BandReShape(&o[27], zsa, p);
-		BandReShape(&o[54], zsb, p);
+		BANDPERM& p = t_auto_b1[imorph];
+		p.MorphOrdered(&o[27], zsa);
+		p.MorphOrdered(&o[54], zsb);
 		if (zsa[0] != 1) {
 			int temp[27];
 			memcpy(temp, zsa, sizeof temp);

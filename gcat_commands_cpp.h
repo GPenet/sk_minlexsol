@@ -55,32 +55,6 @@ const char * libs_c17_00_cpt2g[100] = {
 
 };
 
-
-void BandReShape(int* s, int* d, BANDMINLEX::PERM p) {
-	int * pc = p.cols;
-	//uint8_t* pc = p.cols;
-	for (int irow = 0; irow < 3; irow++) {
-		int drow = 9 * irow;
-		for (int icol = 0; icol < 9; icol++)
-			d[drow + icol] = p.map[s[drow + pc[icol]]];
-	}
-	int temp[9];// now reorder 
-	if (d[0] > d[9]) {
-		memcpy(temp, &d[0], sizeof temp);
-		memcpy(&d[0], &d[9], sizeof temp);
-		memcpy(&d[9], temp, sizeof temp);
-	}
-	if (d[0] > d[18]) {
-		memcpy(temp, &d[0], sizeof temp);
-		memcpy(&d[0], &d[18], sizeof temp);
-		memcpy(&d[18], temp, sizeof temp);
-	}
-	if (d[9] > d[18]) {
-		memcpy(temp, &d[9], sizeof temp);
-		memcpy(&d[9], &d[18], sizeof temp);
-		memcpy(&d[18], temp, sizeof temp);
-	}
-}
 void BandReOrder(int* d) {
 	int temp[9];// now reorder 
 	if (d[0] > d[9]) {
@@ -254,9 +228,12 @@ void Go_c17_31() {// print part of the cat for given rows 4
 			genb12.GoRow5();
 			rank += jr4nsol;
 		}
-		if(p_cpt[14])
-			cout << "seen for band " << i << " " << p_cpt[14] 
-			<< " expected "<< b1startcat[i+1]- b1startcat[i] << endl;
+		if (p_cpt[14]) {
+			int64_t v = b1startcat[i + 1] - b1startcat[i];
+			cout << "seen for band " << i << " " << p_cpt[14]
+				<< " expected " << v<< " dev "<<v- (int64_t)p_cpt[14]	<< endl;
+
+		}
 		p_cpt2g[50] += p_cpt[14];
 		if (ir4b == sgo.vx[1])break;
 	}
@@ -553,7 +530,7 @@ struct B3PAT {
 };
 struct B3PATCUM {
 	int b0[27], pat, index;
-	BANDMINLEX::PERM p;
+	BANDPERM p;
 	void Init(B3PAT& o,int c1,int dig) {
 		memset(b0, 255, sizeof b0);//  init to -1
 		pat = o.pat;
@@ -585,7 +562,12 @@ void Getpats18_b(int row, int* cols,  B3PAT* b3pats) {
 	b3pats[1].cx[0] = c3;
 	b3pats[1].cx[1] = c4;
 }
-
+BANDPERM perms94[4] = {
+{0,{2,0,1},{8,6,7,0,1,2,5,4,3},{8,7,6,5,4,3,2,1,0}},
+{0,{0,1,2},{1,0,2,4,3,5,7,6,8},{1,0,2,4,3,5,7,6,8}},
+{0,{0,1,2},{2,0,1,5,3,4,8,6,7},{1,2,0,4,5,3,7,8,6}},
+{0,{0,1,2},{1,2,0,4,5,3,7,8,6},{2,0,1,5,3,4,8,6,7}},
+};
 
 void Go_c17_92() {// test band3 using gangster
 	cout << "process 91 band3 using template " << endl;
@@ -780,7 +762,8 @@ void Go_c17_93aaaa() {// analysis the 416 bands
 void Go_c17_93() {// analysis of the 30 first bands
 	int* a = genb12.grid0, * b = genb12.colband1;
 	int g[27];
-	cout << "extract row4>5100" << endl;
+/*
+*	cout << "extract row4>5100" << endl;
 	for (uint32_t i = 0; i <= 300; i++) {
 		genb12.InitBand1(i);
 		int x1 = b1r4[i], x2 = b1r4[i + 1];
@@ -796,6 +779,7 @@ void Go_c17_93() {// analysis of the 30 first bands
 		}
 	}
 	return;
+*/
 
 	/*
 		for (uint32_t j = ir4a; j <= ir4b; j++) {
@@ -812,7 +796,7 @@ void Go_c17_93() {// analysis of the 30 first bands
 
 	for (uint32_t i = 0; i <= 415; i++) {
 		genb12.InitBand1(i);
-		BANDMINLEX::PERM  p = automorphsp[100];
+		BANDPERM  p = automorphsp[100];
 		for (int ir = 0; ir < 3; ir++) {
 			int ior = p.rows[ir] * 9, idr = 9 * ir;
 			for (int ic = 0; ic < 9; ic++) {
@@ -907,6 +891,56 @@ void Go_c17_93() {// analysis of the 30 first bands
 			}
 		}
 	}
+
+
+}
+
+void Go_c17_94() {// analysis of  bands to map 
+	int* a = genb12.grid0, * b = genb12.colband1;
+	int g[27];
+	char* ze = finput.ze;
+	uint64_t npuz = 0;
+	op.ton = sgo.vx[0];
+	cout << "Go_c17_94() band analysis get mapping"
+		<< " op.ton=" << op.ton << endl;
+	while (finput.GetLigne()) {
+		cout << ze << endl;
+		if (strlen(ze) < 27)continue;
+		ze[27] = 0;
+		if (npuz++ < sgo.vx[0])continue;
+		//if (op.ton > 1)
+		cout << ze << endl;
+		for (int i = 0; i < 27; i++) g[i]=ze[i]-'1';
+		BANDPERM p;
+		{
+			bandminlex.Getmin(g, &p, 0);
+			p.Dump();
+			p.MorphOrdered(g, b);
+			BandDump(b, " b2 morphed old");
+		}
+
+		int ir=bmlw.GetforMinlex(g,p.i416,1);
+		if (!ir) {
+			//bmlw.Status(1);
+			//bmlw.pout.Dump();
+			int b[27];
+			bmlw.pout.MorphOrdered(g, b);
+			BandDump(b, " b2 morphed new ");
+		}
+		else {
+			bmlw.DumpInit();
+			cout << "return " << ir << endl;
+		}
+		ir = bmlw.GetforMinlex(g, p.i416-1, 1);
+		cout << "return  " << ir << " exected 1 " << endl;
+		ir = bmlw.GetforMinlex(g, p.i416 + 1, 1);
+		cout << "return  " << ir << "  exected -1 " << endl << endl << endl;;
+
+
+		if (npuz >= sgo.vx[1])return;
+	}
+
+
 
 
 }
