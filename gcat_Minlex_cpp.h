@@ -60,6 +60,7 @@ struct BMINLEX {// receive a band send back i416 and morphing data
 
 	int SetupRSC_A() ;
 	void GoMinlex_0_30() ;
+	void DoMapping0();
 	void DoMapping1();
 	void GoA_case6();
 	void GoA_case71();
@@ -546,6 +547,7 @@ int BMINLEX::SetupRSC_A() {
 		//if (ipr != 5) continue;
 		{
 			register int* p = tpermgang[ipr];
+			rr = p;
 			memcpy(minirr, minir0[p[0]], 12);
 			memcpy(&minirr[3], minir0[p[1]], 12);
 			memcpy(&minirr[6], minir0[p[2]], 12);
@@ -557,12 +559,13 @@ int BMINLEX::SetupRSC_A() {
 			//if (ipst != 5) continue;
 			{
 				register int* pc = tpermgang[ipst];
+				px = tpermg9stk[ipst];
 				// check validity of the perm
 				{
 					register int r1 = minirr[pc[0] + 3],
 						r2 = minirr[pc[1]];
 					if (r1 != r2) continue;
-					//cout << ipr << ipst << " go" << endl;
+					if(debug)cout << ipr << ipst << " go" << endl;
 					m456 = r1;
 					m123 = minirr[pc[0]];
 					m789 = minirr[pc[2]];
@@ -605,7 +608,7 @@ int BMINLEX::SetupRSC_A() {
 						r = m123;
 						m1 = r & mc1; m2 = r & mc2; m3 = r & mc3;
 					}
-					//Status6();
+					if(debug)Status6();
 					if ((m3 & mc7)||(m1 & mc8)|| (m9 & mc1)) continue;
 					//cout << " go to check" << endl;
 					MapDigits();
@@ -654,11 +657,7 @@ void BMINLEX::GoMinlex_0_30() {
 			p_cpt2g[10]++;
 			minindex = maxindex = 0;
 			goback = 1;
-			if (!indexlim) {// must do mapping
-				pout.InitBase(0);
-				for (int i = 0; i < 9; i++)
-					pout.map[b0[i]] = i;
-			}
+			if (!indexlim) DoMapping0();
 			return;
 		}
 		case 5: {
@@ -672,7 +671,31 @@ void BMINLEX::GoMinlex_0_30() {
 	}
 
 }
-
+void BMINLEX::DoMapping0() {
+	pout.InitBase(0);
+	for (int i = 0; i < 9; i++)// init to morph on columns
+		pout.map[i] = i;
+	// align  the columns on box 1
+	{
+		int np = 0, n1 = 0;
+		for (int i = 0; i < 3; i++) {
+			register int r = cx[i], n = 0;
+			for (int j = 3; j <6; j++) {
+				if (minicols[j] == r)
+					pout.cols[3 + i] = j;
+			}
+			for (int j = 6; j < 9; j++) {
+				if (minicols[j] == r)
+					pout.cols[6 + i] = j;
+			}
+		}
+	}
+	int bn[27];
+	pout.Morph(b0, bn);
+	for (int i = 0; i < 9; i++)// init map to row 1
+		pout.map[bn[i]] = i;
+	maxindex = minindex = 0; goback = 1;	return;
+}
 void BMINLEX::DoMapping1() {
 	//123 456 789  
 	//456 789 123  
@@ -698,7 +721,7 @@ void BMINLEX::DoMapping1() {
 		}
 
 	}
-	int st1, st2, st3,cxvt[3];// get stacks
+	int st1, st2, st3;// get stacks
 	{
 		register int* y = cxvn[cxp[0]];// first pair
 		st1 = y[0] / 3; st2 = y[1] / 3;
@@ -709,11 +732,7 @@ void BMINLEX::DoMapping1() {
 	// assign the pairs in entry order
 	{
 		register int* y = pout.cols,* w=cxvn[cxt];
-		switch (st3) {
-		case 2: y[0] = w[0]; y[3] = w[1]; y[6] = w[2]; break;
-		case 1: y[0] = w[0]; y[3] = w[2]; y[6] = w[1]; break;
-		case 0: y[0] = w[2]; y[3] = w[0]; y[6] = w[1]; break;
-		}
+		y[0]= w[st1];	y[3] = w[st2]; y[6] = w[st3];
 		w = cxvn[cxp[0]]; y[1] = w[0]; y[4] = w[1];
 		w = cxvn[cxp[1]]; y[2] = w[0]; y[5] = w[1];
 	}
@@ -731,18 +750,20 @@ void BMINLEX::DoMapping1() {
 	}
 	// take common digits columns 3 and 9
 	// ad third digit column 9
-	int x8 = cx[pout.cols[8]],
-		xc = cx[pout.cols[2]] & x8, x = x8 & ~xc,xn;
-	bitscanforward(xn, x);
-	cout << Char9out(x8) << " x8" << endl;
-	cout << Char9out(xc) << " xc xn="<<xn <<" must be 3" << endl;
-	pout.Dump();
+	int x8 = minicols[pout.cols[8]],x3= minicols[pout.cols[2]],
+		xc =x3 & x8,	x = x8 & ~xc, y = x3 & ~xc, y3n,x8n;
+	bitscanforward(x8n, x); bitscanforward(y3n, y);
 	int bn[27];
 	pout.Morph(b0, bn);
-	BandDump(bn, " morphed to new columns");
-//	for (int i = 0; i < 9; i++)// init to morph on columns
-//		pout.map[b0[i]] = i;
-
+	for (int i = 0; i < 3; i++) {
+		if (bn[9 *i +2] == y3n)pout.rows[1] = i;
+		if (bn[9 *i +8] == x8n)pout.rows[2] = i;
+	}
+	pout.rows[0] = 3 - pout.rows[1] - pout.rows[2];
+	int* dr = &bn[9 * pout.rows[0]];
+	for (int i = 0; i < 9; i++)// init map to row 1
+		pout.map[dr[i]] = i;
+	maxindex = minindex = 1; goback = 1;	return;
 }
 
 
@@ -751,10 +772,13 @@ uint32_t tmin6_c6i[3] = { 2,17,26 };
 
 void BMINLEX::GoA_case6() {// 2 17 26
 	//cout << "this is A 6 _ 2 17 26 " << critcomp << " goback="<<goback << endl;
-
+	if (debug)cout << " entry case 6 cols min max "
+		<< minindex << " " << maxindex << endl;
 	int ir = GetCrit9(tmin6_c6v, critcomp, 0, 3);
 	if (ir < 0) return;
-	//cout << "this is band " << tmin6_c6i[ir] << endl;
+	if (debug) {
+		cout << "this is band " << tmin6_c6i[ir] << endl;
+	}
 	ValidMinlex(tmin6_c6i[ir]);
 
 }
@@ -1093,7 +1117,7 @@ void BMINLEX::Go_413() {//mapping if
 
 }
 void BMINLEX::Go_414_415() {//mapping if
-	if (indexlim < 414) {	return;	}
+	if (indexlim < 414) {  minindex = 414;	goback = 1; return; }
 	//cout << "Go_414_415() " << endl;
 	//DumpInit();
 	// get c3 m using m7  then c1 c2 m4 m5
@@ -1130,10 +1154,16 @@ void BMINLEX::Go_414_415() {//mapping if
 	//ir2c4 = 8;	
 	//Status(1);	
 	if (mc1 & m8) {
+		if (indexlim != 414) {
+			maxindex = minindex = 414;	 goback = 1; return;
+		}
 		//cout << "this is band 414"  << endl;
 		ValidMinlex(414);
 	}
 	else {
+		if (indexlim != 415) {
+			maxindex = minindex = 415;	 goback = 1; return;
+		}
 		//cout << "this is band 415" << endl;
 		ValidMinlex(415);
 		//cout << " back minlex" << endl;

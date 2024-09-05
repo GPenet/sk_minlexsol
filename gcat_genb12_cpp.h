@@ -211,6 +211,11 @@ void GEN_BANDES_12::GoRow6() {
 	gfree[45] = r6mfree[0] & ~colband1[0];
 	// can not be below r5c1
 	gfree[45] &= ~(gbit[36] - 1);
+	// if band1 over 30 can not be repetitive mini column
+	if (it16 >30) {
+		register int r = colband1[1]; //25?
+		//if (r & gbit[36])gfree[45] &= ~r;
+	}
 r6c1l: {CELLGO(45, r6c2, endr6)}
 endr6:return;
 
@@ -225,6 +230,14 @@ r6c3:gfree[47] = r6mfree[0] & ~(colband1[2] | gbit[45] | gbit[46]);
 	else    goto r6c2l;
 	//______________________________________________________ box5 r6c4
 	gfree[48] = r6mfree[1] & ~colband1[3];
+	// if band1 over 30 can not be repetitive mini column
+	if (it16 > 30) {
+		register int r = colband1[4], r2 = colband1[5],
+			v=gbit[30] | gbit[39];
+		//if(_popcnt32(r&v)==2)gfree[48] &= ~r;
+		//else if (_popcnt32(r2 & v) == 2)gfree[48] &= ~r2;
+	}
+
 r6c4l: {CELLGO(48, r6c5, r6c2l)}
 
 r6c5:gfree[49] = r6mfree[1] & ~(colband1[4] | gbit[48]);
@@ -238,6 +251,13 @@ r6c6:gfree[50] = r6mfree[1] & ~(colband1[5] | gbit[48] | gbit[49]);
 	else    goto r6c5l;
 	//______________________________________________________ box6 r6c7
 	gfree[51] = r6mfree[2] & ~colband1[6];
+	// if band1 over 30 can not be repetitive mini column
+	if (it16 > 30) {
+		register int r = colband1[7], r2 = colband1[8],
+			v = gbit[33] | gbit[42];
+		//if(_popcnt32(r&v)==2)gfree[51] &= ~r;
+		//else if (_popcnt32(r2 & v) == 2)gfree[51] &= ~r2;
+	}
 r6c7l: {CELLGO(51, r6c8, r6c5l)}
 
 r6c8:gfree[52] = r6mfree[2] & ~(colband1[7] | gbit[51]);
@@ -255,13 +275,14 @@ r6c9:gfree[53] = r6mfree[2] & ~(colband1[8] | gbit[51] | gbit[52]);;
 void GEN_BANDES_12::GoNewBand2() {
 	int locdiag = 0;
 	//locdiag = 1;
-	if (p_cpt2g[31] <100 &&it16==0)locdiag = 1;
+	//if (p_cpt2g[31] <100 &&it16==0)locdiag = 1;
 	if (go_back)return;
 	// check if band2 stays minimal with auto morphs band1
-	{
+	if (sgo.vx[3]) {
+		bandminlex.Getmin(&grid0[27], &pband2, 0);
+		it16_2 = pband2.i416;
+		if (it16_2 == it16)locdiag = sgo.vx[4];
 		if (locdiag) {
-			bandminlex.Getmin(&grid0[27], &pband2, 0);
-			it16_2 = pband2.i416;
 			for (int i = 27; i < 54; i++) cout << grid0[i] + 1;
 			cout << " newb2= " << bmlw.minindex << " " << it16_2 << " p_cpt2g[31]" << p_cpt2g[31] << endl;
 		}
@@ -270,28 +291,29 @@ void GEN_BANDES_12::GoNewBand2() {
 		if (ir < 0) return;// lower band1 
 		if (!ir) {
 			it16_2 = bmlw.minindex;
-			//bandminlex.Getmin(&grid0[27], &pband2, 0);
-			//for (int i = 27; i < 54; i++) cout << grid0[i] + 1;
-			//cout << " newb2= " << bmlw.minindex << " " << it16_2 << " p_cpt2g[31]" << p_cpt2g[31] << endl;
-			//pband2.Dump();
+			if (locdiag) {
+				int cc = memcmp(&pband2, &bmlw.pout, sizeof bmlw.pout);
+				if (cc) {
+					cout << "not same perm" << endl;
+					bmlw.GetforMinlex(&grid0[27], it16, 1);
+					pband2.Dump();
+					bmlw.pout.Dump();
+				}
+			}
 			pband2 = bmlw.pout;
-			//pband2.Dump();
-			//int b[27];
-			//pband2.MorphOrdered(&grid0[27], b);
-			//BandDump(b, " b2 morphed");
-			//int ret = BandCompare(&grid0[27], b);
-			//cout << " iret=" << ret << endl;
 		}
 		else it16_2 = 500;
 
 	}
-	if (0) {
+	else  {
 		int ir = bandminlex.Getmin(&grid0[27], &pband2, 0);
 		if (ir < 0) return; //would be bug  did not come in enumeration
 		it16_2 = pband2.i416;
 		if (it16_2 < it16) return;// lower band1 
 		//cout << " newb2= " << it16_2 << " p_cpt2g[31]" << p_cpt2g[31] << endl;
 	}
+	// if it16<31, can't have a repetitive mini column
+
 
 	p_cpt2g[31]++;
 
@@ -360,7 +382,7 @@ void GEN_BANDES_12::GoB2GangsterAnalysis() {
 	int ig = gangminlex.igang;
 	int istart = tfill_index[ig], iend = tfill_index[ig + 1];
 	//	if (it16_2 < it16) return;// lower band1 
-	if (op.ton > 1) {
+	if (op.ton > 2) {
 		gangminlex.DumpMappingN();
 		for (int i = 0; i < 27; i++) cout << ggi[i] + 1;
 		cout << "gangster studied" << endl;
@@ -394,7 +416,7 @@ void GEN_BANDES_12::GoB2GangsterAnalysis() {
 	for (int i = 0; i < nokindex; i++) {
 		p_cpt2g[7]++;
 		int* myb = tfillbandmorphed[tfillorder[i]];
-		if (op.ton > 1) {
+		if (op.ton > 2) {
 			for (int i = 0; i < 27; i++) cout<< myb[i]+1;
 			cout << "  fill to check " << p_cpt2g[7] << endl;
 		}
@@ -416,7 +438,7 @@ void GEN_BANDES_12::GoB2GangsterAnalysis() {
 			idt16[2] = perm_ret.i416;
 			if (idt16[2] < it16) continue; //no minimal here
 		}
-		if (op.ton > 1) cout << " diag id " << idt16[0] << " " << idt16[1] << " "
+		if (op.ton > 2) cout << " diag id " << idt16[0] << " " << idt16[1] << " "
 			<< idt16[2] << endl;
 		// if same index need perm band 3 in checksol
 		if(it16==it16_3 || it16_2==it16_3)
@@ -544,7 +566,7 @@ void GEN_BANDES_12::Outcat() {
 		if (op.ton) {
 			for (int i = 0; i < 81; i++)fout1 << grid0[i] + 1;
 			fout1 << ";" << s_rank + p_cpt[4] << endl;
-			if (op.ton > 1) {
+			if (op.ton > 2) {
 				for (int i = 0; i < 81; i++)cout << grid0[i] + 1;
 				cout << ";"<<it16 << "  " << it16_2 << " " << it16_3 << endl;
 
