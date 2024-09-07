@@ -36,10 +36,13 @@ struct GEN_BANDES_12 {// encapsulating global data
 	int modeb12, go_back, diagmore, diagbug, 
 		it16, it16_2, it16_3,isbandbelow31;
 	int idt16[3];// diagonal
+	BANDPERM permd[3];// storin permms diag if ==
 	int irtw2,iret_diag;
 	char zsol[82], rband2[28];
 	int grid0[81],gbit[81],gfree[81],colband1[9],
-		grid1[81], gw[81], tc[6], ntc;
+		grid1[81], gw[81], tc[6], ntc,
+		*g0_2,*g0_3;
+	int gd[81], need_diagcheck;// diagonal of a fill
 	int zsa[27], zsb[27], zsmin[81];
 
 //	uint64_t   nb12;
@@ -134,9 +137,6 @@ struct GEN_BANDES_12 {// encapsulating global data
 		int BelowB1b2();
 		int BelowCompB1b2();
 
-		int Below();
-		int BelowComp();
-
 		void InitCom() {
 			bandminlex.Getmin(zs0, &perm_ret);
 			ib[0] = perm_ret.i416;
@@ -186,9 +186,12 @@ struct GEN_BANDES_12 {// encapsulating global data
 			cout << lib  << endl;
 		}
 
-	}tww,tww2,tww3;
+	}tww,tww2x,tww3x;
 
-
+	GEN_BANDES_12() {
+		g0_2 = &grid0[27];
+		g0_3 = &grid0[54];
+	}
 
 	void InitBand1(int iw);
 	void InitRow4FromI10375(int i10375);
@@ -203,7 +206,7 @@ struct GEN_BANDES_12 {// encapsulating global data
 	void GoB2GangsterAnalysis();
 	inline void GoCheckSol();
 	inline void GoCheckDiagonal();
-
+	inline int CheckBelow();
 	void Outcat();
 	//===============  
 	int FindSolForRank();

@@ -214,7 +214,7 @@ void GEN_BANDES_12::GoRow6() {
 	// if band1 over 30 can not be repetitive mini column
 	if (it16 >30) {
 		register int r = colband1[1]; //25?
-		//if (r & gbit[36])gfree[45] &= ~r;
+		if (r & gbit[36])gfree[45] &= ~r;
 	}
 r6c1l: {CELLGO(45, r6c2, endr6)}
 endr6:return;
@@ -234,8 +234,8 @@ r6c3:gfree[47] = r6mfree[0] & ~(colband1[2] | gbit[45] | gbit[46]);
 	if (it16 > 30) {
 		register int r = colband1[4], r2 = colband1[5],
 			v=gbit[30] | gbit[39];
-		//if(_popcnt32(r&v)==2)gfree[48] &= ~r;
-		//else if (_popcnt32(r2 & v) == 2)gfree[48] &= ~r2;
+		if(_popcnt32(r&v)==2)gfree[48] &= ~r;
+		else if (_popcnt32(r2 & v) == 2)gfree[48] &= ~r2;
 	}
 
 r6c4l: {CELLGO(48, r6c5, r6c2l)}
@@ -255,8 +255,8 @@ r6c6:gfree[50] = r6mfree[1] & ~(colband1[5] | gbit[48] | gbit[49]);
 	if (it16 > 30) {
 		register int r = colband1[7], r2 = colband1[8],
 			v = gbit[33] | gbit[42];
-		//if(_popcnt32(r&v)==2)gfree[51] &= ~r;
-		//else if (_popcnt32(r2 & v) == 2)gfree[51] &= ~r2;
+		if(_popcnt32(r&v)==2)gfree[51] &= ~r;
+		else if (_popcnt32(r2 & v) == 2)gfree[51] &= ~r2;
 	}
 r6c7l: {CELLGO(51, r6c8, r6c5l)}
 
@@ -278,43 +278,26 @@ void GEN_BANDES_12::GoNewBand2() {
 	//if (p_cpt2g[31] <100 &&it16==0)locdiag = 1;
 	if (go_back)return;
 	// check if band2 stays minimal with auto morphs band1
-	if (sgo.vx[3]) {
-		bandminlex.Getmin(&grid0[27], &pband2, 0);
-		it16_2 = pband2.i416;
-		if (it16_2 == it16)locdiag = sgo.vx[4];
-		if (locdiag) {
-			for (int i = 27; i < 54; i++) cout << grid0[i] + 1;
-			cout << " newb2= " << bmlw.minindex << " " << it16_2 << " p_cpt2g[31]" << p_cpt2g[31] << endl;
-		}
+	{
 		int ir = bmlw.GetforMinlex( & grid0[27], it16,0);
-		if (locdiag) cout << " ir=" << ir << endl;
 		if (ir < 0) return;// lower band1 
 		if (!ir) {
 			it16_2 = bmlw.minindex;
-			if (locdiag) {
+			/*
+			if (sgo.vx[4]) {
+				bandminlex.Getmin(&grid0[27], &pband2, 0);
 				int cc = memcmp(&pband2, &bmlw.pout, sizeof bmlw.pout);
 				if (cc) {
-					cout << "not same perm" << endl;
-					bmlw.GetforMinlex(&grid0[27], it16, 1);
+					cout << "not same perm " << it16_2 << endl;
 					pband2.Dump();
 					bmlw.pout.Dump();
 				}
 			}
+			*/
 			pband2 = bmlw.pout;
 		}
 		else it16_2 = 500;
-
 	}
-	else  {
-		int ir = bandminlex.Getmin(&grid0[27], &pband2, 0);
-		if (ir < 0) return; //would be bug  did not come in enumeration
-		it16_2 = pband2.i416;
-		if (it16_2 < it16) return;// lower band1 
-		//cout << " newb2= " << it16_2 << " p_cpt2g[31]" << p_cpt2g[31] << endl;
-	}
-	// if it16<31, can't have a repetitive mini column
-
-
 	p_cpt2g[31]++;
 
 	// build now the gangster band 3
@@ -381,14 +364,6 @@ void GEN_BANDES_12::GoB2GangsterAnalysis() {
 	gangminlex.Init(ggi);
 	int ig = gangminlex.igang;
 	int istart = tfill_index[ig], iend = tfill_index[ig + 1];
-	//	if (it16_2 < it16) return;// lower band1 
-	if (op.ton > 2) {
-		gangminlex.DumpMappingN();
-		for (int i = 0; i < 27; i++) cout << ggi[i] + 1;
-		cout << "gangster studied" << endl;
-		cout << "ig found" << ig
-			<< " start end " << istart << " " << iend << " ";// << endl;
-	}
 	int nokindex = 0;
 	for (int i = istart; i < iend; i++) {
 		int bd=tfillband[i];
@@ -408,7 +383,6 @@ void GEN_BANDES_12::GoB2GangsterAnalysis() {
 		tfillbandid[nokindex] = bd;
 		memcpy(tfillbandmorphed[nokindex++], b3morphed, 4 * 27);
 	}
-	if (op.ton > 2) cout << " seen valid fills " << nokindex << endl;
 	if (!nokindex)return;
 
 	if (nokindex > 1)SortBandsMorphed(nokindex);
@@ -416,33 +390,55 @@ void GEN_BANDES_12::GoB2GangsterAnalysis() {
 	for (int i = 0; i < nokindex; i++) {
 		p_cpt2g[7]++;
 		int* myb = tfillbandmorphed[tfillorder[i]];
-		if (op.ton > 2) {
-			for (int i = 0; i < 27; i++) cout<< myb[i]+1;
-			cout << "  fill to check " << p_cpt2g[7] << endl;
-		}
-
 		for (int i = 0; i < 27; i++) grid0[54+i] = myb[i];
 		it16_3 = tfillbandid[tfillorder[i]];
 		// check stacks
+		for (int i = 0; i < 81; i++)gd[i] = grid0[C_transpose_d[i]];
+		need_diagcheck = 0;
+		// find diagonal bands id and perms
 		{
-			int gd[81];
-			for (int i = 0; i < 81; i++)gd[i] = grid0[C_transpose_d[i]];
-			BANDPERM perm_ret;
-			bandminlex.Getmin(gd, &perm_ret);
-			idt16[0] = perm_ret.i416;
-			if (idt16[0] < it16) continue; //no minimal here
-			bandminlex.Getmin(&gd[27], &perm_ret);
-			idt16[1] = perm_ret.i416;
-			if (idt16[1] < it16) continue; //no minimal here
-			bandminlex.Getmin(&gd[54], &perm_ret);
-			idt16[2] = perm_ret.i416;
-			if (idt16[2] < it16) continue; //no minimal here
+			int ir = bmlw.GetforMinlex(gd, it16);
+			if (ir < 0) continue;// lower band1
+			if (!ir) {
+				idt16[0] = bmlw.minindex;
+				permd[0] = bmlw.pout;
+				need_diagcheck = 1;
+			}
+			else idt16[0] = 500;
+			ir=bmlw.GetforMinlex(&gd[27], it16);
+			if (ir < 0) continue;// lower band1
+			if (!ir) {
+				idt16[1] = bmlw.minindex;
+				permd[1] = bmlw.pout;
+				need_diagcheck = 1;
+			}
+			else idt16[1] = 501;
+
+			ir=bmlw.GetforMinlex(&gd[54], it16);
+			if (ir < 0) continue;// lower band1
+			if (!ir) {
+				idt16[2] = bmlw.minindex;
+				need_diagcheck = 1;
+				permd[2] = bmlw.pout;
+			}
+			else idt16[2] = 502;
 		}
-		if (op.ton > 2) cout << " diag id " << idt16[0] << " " << idt16[1] << " "
-			<< idt16[2] << endl;
+
+		if (sgo.vx[4]) {
+			for (int i = 0; i < 81; i++)cout << grid0[i] + 1;
+			cout << " g0 " << p_cpt2g[9] << " " << it16 << endl;
+			for (int i = 0; i < 81; i++)cout << gd[i] + 1;
+			cout << endl << endl;
+			cout << " diag id " << idt16[0] << " " << idt16[1] << " "
+				<< idt16[2] << endl;
+		}
+
 		// if same index need perm band 3 in checksol
-		if(it16==it16_3 || it16_2==it16_3)
-			bandminlex.Getmin(&grid0[54], &pband3);
+		if (it16 == it16_3) {//|| it16_2==it16_3)
+			bmlw.GetforMinlex(&grid0[54], it16);
+			pband3 = bmlw.pout;
+		}
+		//bandminlex.Getmin(&grid0[54], &pband3);
 		GoCheckSol();
 	}
 }
@@ -485,58 +481,74 @@ inline void GEN_BANDES_12::GoCheckSol() {
 
 	if (it16 == it16_2) {//  try band 2 first
 		tww.InitAndMorph(grid0, pband2, 1); // init and morph band 2 first
-		if (tww.Below()) return;
+		//if (tww.Below()) return;
+		if (CheckBelow()) return;
 	}
 
 	if (it16 == it16_3) {//  try band 3 first
 		tww.InitAndMorph(grid0, pband3, 2); // init and morph band 3 first
-		if (tww.Below()) return;
+		//if (tww.Below()) return;
+		if (CheckBelow()) return;
 	}
-	//cout<< it16 << " look for check diagonal "<< idt16[0]<<" "
-	//	<< idt16[1] << " " << idt16[2] << endl;
-	if (idt16[0] == it16 || idt16[1] == it16 || idt16[2] == it16)
-		GoCheckDiagonal();
-	else Outcat();
-}
+	if (need_diagcheck) {
+		for (int i = 0; i < 3; i++)	if (idt16[i] == it16) {
+			tww.InitAndMorph(gd, permd[i], i); // init and morph band 3 first
+			//if (tww.Below()) return;
+			if (CheckBelow()) return;
+		}
 
-inline void GEN_BANDES_12::GoCheckDiagonal() {
-	//cout << "check diagonal" << endl;
-	int gdiag[81];	// now check diagonal
-	for (int i = 0; i < 81; i++)gdiag[i] = grid0[C_transpose_d[i]];
-	for (int i = 0; i < 3; i++)	if (idt16[i] == it16) {
-		BANDPERM p;
-		bandminlex.Getmin(&gdiag[27 * i], &p);
-		tww.InitAndMorph(gdiag, p, i); // init and morph band 3 first
-		if (tww.Below()) return;
 	}
+	//	GoCheckDiagonal();
+	//if (idt16[0] == it16 || idt16[1] == it16 || idt16[2] == it16)
+	//	GoCheckDiagonal();
+	//else 
 	Outcat();
 }
 
-int GEN_BANDES_12::TWW::Below() {
-	memcpy(zsa, &zs0[27], sizeof zsa);
-	memcpy(zsb, &zs0[54], sizeof zsb);
-	if (BelowComp()) return 1;
-	for (int imorph = 0; imorph < genb12.n_auto_b1; imorph++) {
-		BANDPERM& p = genb12.t_auto_b1[imorph];
-		p.MorphOrdered(&zs0[27], zsa);
-		p.MorphOrdered(&zs0[54], zsb);
-		if (BelowComp()) return 1;
+inline void GEN_BANDES_12::GoCheckDiagonal() {
+	if (sgo.vx[4])cout << "go check diagonal" << endl;
+	for (int i = 0; i < 3; i++)	if (idt16[i] == it16) {
+		if (sgo.vx[4])cout << "check diagonal" << endl;
+		tww.InitAndMorph(gd, permd[i] , i); // init and morph band 3 first
+		//if (tww.Below()) return;
+		if (CheckBelow()) return;
+	}
+	Outcat();
+}
+inline int GEN_BANDES_12::CheckBelow() {
+	register int* ba = &tww.zs0[27], * bb = &tww.zs0[54];
+	if (ba[0] == 1) {// must be band 2
+		int ir = BandCompare(ba, g0_2);
+		if (ir < 0) return 1; 
+		if ((!ir)&& BandCompare(bb, g0_3) < 0) return 1; 
+	}
+	else {
+		int ir = BandCompare(bb, g0_2);
+		if (ir < 0) return 1; 		
+		if ((!ir) && BandCompare(ba, g0_3) < 0) return 1;
+
+	}
+	for (int imorph = 0; imorph < n_auto_b1; imorph++) {
+		BANDPERM& p = t_auto_b1[imorph];
+		int ba2[27], bb2[27];
+		p.MorphOrdered(ba, ba2);
+		p.MorphOrdered(bb, bb2);
+		if (ba2[0] == 1) {// must be band 2
+			int ir = BandCompare(ba2, g0_2);
+			if (ir < 0) return 1;
+			if ((!ir) && BandCompare(bb2, g0_3) < 0) return 1;
+		}
+		else {
+			int ir = BandCompare(bb2, g0_2);
+			if (ir < 0) return 1;
+			if ((!ir) && BandCompare(ba2, g0_3) < 0) return 1;
+
+		}
 	}
 	return 0;
 }
-int GEN_BANDES_12::TWW::BelowComp() {
-	if (zsa[0] != 1) {
-		int temp[27];
-		memcpy(temp, zsa, sizeof temp);
-		memcpy(zsa, zsb, sizeof temp);
-		memcpy(zsb, temp, sizeof temp);
-	}
-	int ir = BandCompare(zsa, &genb12.grid0[27]);
-	if (ir < 0) return 1; if (ir ) return 0;
-	ir = BandCompare(zsb, &genb12.grid0[54]);
-	if (ir < 0) return 1; 
-	return 0;
-}
+
+
 void GEN_BANDES_12::Outcat() {
 	if (go_back)return;
 	p_cpt[4]++;

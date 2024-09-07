@@ -73,7 +73,7 @@ void BandReOrder(int* d) {
 		memcpy(&d[18], temp, sizeof temp);
 	}
 }
-int BandCompare(int* a, int* b) {
+inline int BandCompare(int* a, int* b) {
 	for (int i = 0; i < 27; i++) {
 		if (a[i] > b[i]) return 1;
 		if (a[i] < b[i]) return -1;
@@ -237,7 +237,7 @@ void Go_c17_31() {// print part of the cat for given rows 4
 		p_cpt2g[50] += p_cpt[14];
 		if (ir4b == sgo.vx[1])break;
 	}
-	cout << "end count "<< p_cpt2g[50] << endl;
+	cout << "end count "<< p_cpt2g[50]<< " [31]"<< p_cpt2g[31] << endl;
 }
 void Go_c17_80() {// enumeration test
 	//return; // revise command line
@@ -739,6 +739,30 @@ void Go_c17_92() {// test band3 using gangster
 
 }
 
+
+void Go_c17_93ccccc() {// gangster of  the 416 bands
+	int* a = genb12.grid0, * b = genb12.colband1;
+	for (uint32_t ib = 0; ib <= 415; ib++) {
+		genb12.InitBand1(ib);
+		// build the gangster
+		int g[27];
+		for (int ic = 0,i=0; ic < 9; ic++) {
+			register int v = genb12.colband1[ic];
+			int c1, c2, c3;
+			bitscanforward(c1, v);
+			v ^= 1 << c1;
+			bitscanforward(c2, v);
+			bitscanreverse(c3, v);
+			g[i++ ] = c1; g[i++] = c2; g[i++] = c3;
+		}
+		for (int i = 0; i < 27; i++)	cout<< g[i] + 1;
+		gangminlex.Init(g);
+		int ig = gangminlex.igang;
+		cout << "gang band 1 N°" << ib << " found ig="<<ig << endl;
+
+	}
+}
+
 void Go_c17_93aaaa() {// analysis the 416 bands
 	int* a = genb12.grid0, * b = genb12.colband1;
 	for (uint32_t ib = 0; ib <= 415; ib++) {
@@ -762,9 +786,9 @@ void Go_c17_93aaaa() {// analysis the 416 bands
 void Go_c17_93() {// analysis of the 30 first bands
 	int* a = genb12.grid0, * b = genb12.colband1;
 	int g[27];
-/*
-*	cout << "extract row4>5100" << endl;
+	cout << "extract row4>5100" << endl;
 	for (uint32_t i = 0; i <= 300; i++) {
+		BANDPERM  p;
 		genb12.InitBand1(i);
 		int x1 = b1r4[i], x2 = b1r4[i + 1];
 		for (int ix = x1; ix < x2; ix++) {
@@ -772,14 +796,15 @@ void Go_c17_93() {// analysis of the 30 first bands
 			if (ns < 55000) continue;
 			uint32_t jr4index = tr4u[ix];
 			genb12.InitRow4FromI10375(jr4index);
+			bandminlex.Getmin(genb12.grid0, &p);
 			for (int k = 0; k < 36; k++) fout1 << genb12.grid0[k] + 1;
-			fout1 << ";" << ns << endl;
+			fout1 << ";" << ns <<";"<<p.i416 << endl;
 
 
 		}
 	}
 	return;
-*/
+
 
 	/*
 		for (uint32_t j = ir4a; j <= ir4b; j++) {

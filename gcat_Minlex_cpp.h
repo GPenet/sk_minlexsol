@@ -1093,7 +1093,8 @@ void BMINLEX::GoB_case9_2_go() {
 	986 217 354 _   415    	7 1 0
 */
 void BMINLEX::T412p() {
-	if (debug)cout << "T412p() nxcols=" << nxcols << endl;
+	if (debug)cout << "T412p() nxcols=" << nxcols 
+		<< " nx3="<< nx3 << endl;
 	if (nxcols == 3) {	Go_412(); return;	}
 	if (nxcols == 5) { Go_413(); return; }
 	if (nxcols != 7) return;	
@@ -1117,7 +1118,8 @@ void BMINLEX::Go_413() {//mapping if
 
 }
 void BMINLEX::Go_414_415() {//mapping if
-	if (indexlim < 414) {  minindex = 414;	goback = 1; return; }
+	if (debug)cout << "Go_414_415() " << endl;
+	//if (indexlim < 414) {  minindex = 414;	goback = 1; return; }
 	//cout << "Go_414_415() " << endl;
 	//DumpInit();
 	// get c3 m using m7  then c1 c2 m4 m5
